@@ -12,33 +12,57 @@
 module load anaconda3
 conda activate bio
 
+# --- User-specified input paths ---
+read -p "Path to HAL alignment file: " HAL_FILE
+read -p "Path to human peaks BED file: " HUMAN_PEAKS
+read -p "Path to mouse genome FASTA (e.g., mm10.fa): " MOUSE_FASTA
+read -p "Path to mouse open chromatin BED file: " MOUSE_OPEN_BED
+read -p "Path to motif database (e.g., JASPAR .meme file): " MOTIF_DB
+read -p "Output directory: " OUTPUT_DIR
+
+# Derived output paths
+LIFTOVER_BED="$OUTPUT_DIR/mouse_peaks_liftover.bed"
+INTERSECT_BED="$OUTPUT_DIR/mouse_peaks_liftover_intersect_mouse_liver.bed"
+FASTA_OUT="$OUTPUT_DIR/mouse_conserved_sequences.fa"
+MEME_OUT="$OUTPUT_DIR/meme_output"
+CONSERVATION_STATS="$OUTPUT_DIR/conservation_summary.txt"
+
+mkdir -p "$OUTPUT_DIR"
+
 # --- Step 1: Run halLiftover ---
 echo "Running halLiftover..."
-halLiftover /ocean/projects/bio230007p/achousal/ikaplow/Alignments/10plusway-master.hal \
+halLiftover "$HAL_FILE" \
   Human \
-  /ocean/projects/bio230007p/achousal/Human_Liver/idr.optimal_peak.narrowPeak \
+  "$HUMAN_PEAKS" \
   Mouse \
-  /ocean/projects/bio230007p/achousal/mouse_peaks_liftover.bed
+  "$LIFTOVER_BED"
 
 # --- Step 2: Intersect with mouse liver peaks ---
 echo "Running bedtools intersect..."
-bedtools intersect -a /ocean/projects/bio230007p/achousal/mouse_peaks_liftover.bed \
-  -b /ocean/projects/bio230007p/achousal/Mouse_Liver/mouse_liver_peaks.bed \
-  -u > /ocean/projects/bio230007p/achousal/mouse_peaks_liftover_intersect_mouse_liver.bed
+bedtools intersect -a "$LIFTOVER_BED" \
+  -b "$MOUSE_OPEN_BED" \
+  -u > "$INTERSECT_BED"
 
 # --- Step 3: Extract FASTA sequences ---
 echo "Extracting FASTA sequences..."
-bedtools getfasta -fi /ocean/projects/bio230007p/achousal/ikaplow/MouseGenomeInfo/mm10.fa \
-  -bed /ocean/projects/bio230007p/achousal/mouse_peaks_liftover_intersect_mouse_liver.bed \
-  -fo /ocean/projects/bio230007p/achousal/mouse_conserved_sequences.fa
+bedtools getfasta -fi "$MOUSE_FASTA" \
+  -bed "$INTERSECT_BED" \
+  -fo "$FASTA_OUT"
 
 # --- Step 4: Run MEME-ChIP ---
 echo "Running MEME-ChIP..."
-meme-chip -oc /ocean/projects/bio230007p/achousal/meme_output \
-  -db /ocean/projects/bio230007p/achousal/motif_databases/JASPAR/JASPAR2022_CORE_vertebrates_non-redundant.meme \
+meme-chip -oc "$MEME_OUT" \
+  -db "$MOTIF_DB" \
   -meme-maxw 20 \
   -meme-nmotifs 5 \
   -meme-minw 6 \
-  /ocean/projects/bio230007p/achousal/mouse_conserved_sequences.fa
+  "$FASTA_OUT"
 
-echo "Pipeline complete."
+# --- Step 5: Conservation analysis ---
+echo "Running conservation analysis..."
+TOTAL=$(wc -l < "$LIFTOVER_BED")
+CONSERVING=$(wc -l < "$INTERSECT_BED")
+PERCENT=$(echo "scale=2; 100 * $CONSERVING / $TOTAL" | bc)
+echo -e "Total lifted-over peaks: $TOTAL\nConserved peaks (overlapping mouse open chromatin): $CONSERVING\nPercent conserved: $PERCENT%" > "$CONSERVATION_STATS"
+
+echo "Pipeline complete. Conservation results written to $CONSERVATION_STATS."
