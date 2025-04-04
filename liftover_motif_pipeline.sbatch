@@ -49,20 +49,4 @@ bedtools getfasta -fi "$MOUSE_FASTA" \
   -bed "$INTERSECT_BED" \
   -fo "$FASTA_OUT"
 
-# --- Step 4: Run MEME-ChIP ---
-echo "Running MEME-ChIP..."
-meme-chip -oc "$MEME_OUT" \
-  -db "$MOTIF_DB" \
-  -meme-maxw 20 \
-  -meme-nmotifs 5 \
-  -meme-minw 6 \
-  "$FASTA_OUT"
 
-# --- Step 5: Conservation analysis ---
-echo "Running conservation analysis..."
-TOTAL=$(wc -l < "$LIFTOVER_BED")
-CONSERVING=$(wc -l < "$INTERSECT_BED")
-PERCENT=$(echo "scale=2; 100 * $CONSERVING / $TOTAL" | bc)
-echo -e "Total lifted-over peaks: $TOTAL\nConserved peaks (overlapping mouse open chromatin): $CONSERVING\nPercent conserved: $PERCENT%" > "$CONSERVATION_STATS"
-
-echo "Pipeline complete. Conservation results written to $CONSERVATION_STATS."
