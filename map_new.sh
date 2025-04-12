@@ -35,6 +35,7 @@ bash $HALPER_DIR/halper_map_peak_orthologs.sh \
   -t Mouse \
   -c $CACTUS_ALIGNMENT \
   -n human_liver
+zcat $OUTPUT_DIR/human_liver.HumanToMouse.HALPER.narrowPeak.gz | cut -f1-3 > $OUTPUT_DIR/human_liver_mouse_mapped.bed
 
 # Human Pancreas
 zcat /ocean/projects/bio230007p/achousal/ikaplow/HumanAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz > /tmp/human_pancreas_peaks.bed
@@ -45,6 +46,7 @@ bash $HALPER_DIR/halper_map_peak_orthologs.sh \
   -t Mouse \
   -c $CACTUS_ALIGNMENT \
   -n human_pancreas
+zcat $OUTPUT_DIR/human_pancreas.HumanToMouse.HALPER.narrowPeak.gz | cut -f1-3 > $OUTPUT_DIR/human_pancreas_mouse_mapped.bed
 
 # Mouse Liver
 zcat /ocean/projects/bio230007p/achousal/ikaplow/MouseAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz > /tmp/mouse_liver_peaks.bed
@@ -55,6 +57,7 @@ bash $HALPER_DIR/halper_map_peak_orthologs.sh \
   -t Human \
   -c $CACTUS_ALIGNMENT \
   -n mouse_liver
+zcat $OUTPUT_DIR/mouse_liver.MouseToHuman.HALPER.narrowPeak.gz | cut -f1-3 > $OUTPUT_DIR/mouse_liver_human_mapped.bed
 
 # Mouse Pancreas
 zcat /ocean/projects/bio230007p/achousal/ikaplow/MouseAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz > /tmp/mouse_pancreas_peaks.bed
@@ -65,5 +68,6 @@ bash $HALPER_DIR/halper_map_peak_orthologs.sh \
   -t Human \
   -c $CACTUS_ALIGNMENT \
   -n mouse_pancreas
+zcat $OUTPUT_DIR/mouse_pancreas.MouseToHuman.HALPER.narrowPeak.gz | cut -f1-3 > $OUTPUT_DIR/mouse_pancreas_human_mapped.bed
 
-echo "All mapping jobs completed"
+echo "All HALPER mappings and GREAT-ready BED files created."
