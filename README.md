@@ -33,7 +33,7 @@ We aim to answer three primary questions with these results:
 ---
 ## Workflow
 
-***INSERT pipeline flowchart here***
+![](https://github.com/achousal/Bioinformatics_03713/blob/main/pipeline.png)
 1. **Data Quality Control**
 ATAC-seq quality reports (provided) from human and mouse liver, pancreas, and ovary were used to determine which datasets to use for further analysis. The ovarian dataset consisted of short read lengths for both human and mouse, and was thrown out. This step is essential for ensuring informative results. 
 2. **Cross-Species Mapping**
