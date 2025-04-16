@@ -1,7 +1,9 @@
 # Cross-Species Regulatory Element Analysis Pipeline
 
 **Team:** Andres Chousal, Zahin Peerzade, Siddharth Sabata, Yinuo Yang
+
 **Course:** Bioinformatics Data Practicum
+
 **Tissues:** Liver, Pancreas (Human \& Mouse)
 
 ---
@@ -25,9 +27,13 @@
 This pipeline performs a comparative analysis of transcriptional regulatory elements (promoters and enhancers) between liver and pancreas tissues in human and mouse. It maps open chromatin regions across species, identifies conserved and tissue-specific elements, classifies peaks as promoters or enhancers, and performs motif discovery and functional enrichment.
 
 We aim to answer three primary questions with these results:
-**===Question 1===**: Is transcriptional regulatory element activity more conserved across tissues or species?
-**===Question 2===**: To what extent does the transcriptional regulatory code differ between enhancers and promoters?
-**===Question 3===**: To what extent are the biological processes upregulated in tissue conserved across species?
+
+**Question 1**: Is transcriptional regulatory element activity more conserved across tissues or species?
+
+**Question 2**: To what extent does the transcriptional regulatory code differ between enhancers and promoters?
+
+**Question 3**: To what extent are the biological processes upregulated in tissue conserved across species?
+
 (*Questions directly quoted from project description document*)
 
 ---
@@ -35,16 +41,22 @@ We aim to answer three primary questions with these results:
 
 ![](https://github.com/achousal/Bioinformatics_03713/blob/main/pipeline.png)
 1. **Data Quality Control**
+
 ATAC-seq quality reports (provided) from human and mouse liver, pancreas, and ovary were used to determine which datasets to use for further analysis. The ovarian dataset consisted of short read lengths for both human and mouse, and was thrown out. This step is essential for ensuring informative results. 
 2. **Cross-Species Mapping**
+
 Open chromatin regions identified from ATAC-seq are mapped between human and mouse genomes using HALPER (HAL Liftover Post-processing for Epigenomic Regions) with Cactus whole-genome alignments. This step is crucial for identifying orthologous regulatory elements between species, allowing direct comparison of regulatory activity at corresponding genomic locations. The mapping process accounts for genomic rearrangements and evolutionary changes that have occurred since the divergence of humans and mice. ***add something about IDR optimal narrow peaks?***
-3. **Conservation and Specificity Analysis** ===(Question 1)===
+3. **Conservation and Specificity Analysis** (Question 1)
+
 This step identifies and categorizes regulatory elements based on their conservation patterns: elements conserved between species for the same tissue, elements shared across tissues within a species, and elements specific to a tissue or species. By quantifying these different categories, we can directly address whether regulatory element activity is more conserved across tissues or species. This analysis provides insights into the evolutionary constraints on gene regulation.
-4. **Functional Annotation** ===(Question 3)===
+4. **Functional Annotation** (Question 3)
+
 Regulatory elements identified in previous steps are annotated using ChIPseeker and analyzed for GO term enrichment with GREAT. This analysis connects regulatory elements to their potential target genes and biological functions, revealing which biological processes are regulated by conserved versus species-specific elements. The functional analysis helps determine whether similar biological processes are regulated by conserved elements across species, despite potential differences in the specific regulatory elements.
-5. **Enhancer/Promoter Classification** ===(Question 2)===
+5. **Enhancer/Promoter Classification** (Question 2)
+
 Open chromatin regions are classified as promoters (within 2kb upstream and 200bp downstream of TSS) or enhancers (all other regions) using BEDTools and genome annotations. This classification is essential for understanding how conservation patterns differ between these two types of regulatory elements. Promoters, which are proximal to genes, may be under different evolutionary constraints than enhancers, which can act at a distance and may evolve more rapidly.
-6. **Motif Discovery** ===(Question 2)===
+6. **Motif Discovery** (Question 2)
+
 Sequences from classified regulatory elements are extracted and analyzed using MEME-ChIP for de novo motif discovery. This step identifies enriched transcription factor binding motifs in different categories of regulatory elements, revealing how the transcriptional regulatory code differs between tissues and species. By comparing motifs between enhancers and promoters across species and tissues, we can understand how the language of transcription factors has evolved.
 
 ---
