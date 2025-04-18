@@ -150,7 +150,8 @@ pancreas_conserved_genes <- unique(pancreas_conserved_df$geneId[!is.na(pancreas_
 human_pancreas_specific_genes <- unique(human_pancreas_specific_df$geneId[!is.na(human_pancreas_specific_df$geneId)])
 mouse_pancreas_specific_genes <- unique(mouse_pancreas_specific_df$geneId[!is.na(mouse_pancreas_specific_df$geneId)])
 
-# Create gene lists for GO analysis
+###################### MODIFIED GENE LISTS FOR COMBINED ANALYSIS ######################
+# Create gene lists with consistent structure across all categories
 liver_gene_list <- list(
   "Conserved" = liver_conserved_genes,
   "Human_Specific" = human_liver_specific_genes
@@ -161,17 +162,18 @@ pancreas_gene_list <- list(
   "Human_Specific" = human_pancreas_specific_genes
 )
 
+# Mouse-specific gene lists
 mouse_liver_gene_list <- list(
-  "Mouse_Liver_Specific" = mouse_liver_specific_genes
+  "Mouse_Specific" = mouse_liver_specific_genes
 )
 
 mouse_pancreas_gene_list <- list(
-  "Mouse_Pancreas_Specific" = mouse_pancreas_specific_genes
+  "Mouse_Specific" = mouse_pancreas_specific_genes
 )
 
-# GO enrichment analysis
-# Human/conserved regions (using human database)
-liver_go <- compareCluster(
+###################### GO ENRICHMENT ANALYSIS ######################
+# Human genes (conserved and human-specific)
+liver_go_human <- compareCluster(
   liver_gene_list,
   fun = "enrichGO",
   OrgDb = org.Hs.eg.db,
@@ -181,7 +183,7 @@ liver_go <- compareCluster(
   qvalueCutoff = 0.05
 )
 
-pancreas_go <- compareCluster(
+pancreas_go_human <- compareCluster(
   pancreas_gene_list,
   fun = "enrichGO",
   OrgDb = org.Hs.eg.db,
@@ -191,8 +193,8 @@ pancreas_go <- compareCluster(
   qvalueCutoff = 0.05
 )
 
-# Mouse-specific regions (using mouse database)
-mouse_liver_go <- compareCluster(
+# Mouse-specific genes
+liver_go_mouse <- compareCluster(
   mouse_liver_gene_list,
   fun = "enrichGO",
   OrgDb = org.Mm.eg.db,
@@ -202,7 +204,7 @@ mouse_liver_go <- compareCluster(
   qvalueCutoff = 0.05
 )
 
-mouse_pancreas_go <- compareCluster(
+pancreas_go_mouse <- compareCluster(
   mouse_pancreas_gene_list,
   fun = "enrichGO",
   OrgDb = org.Mm.eg.db,
@@ -213,31 +215,99 @@ mouse_pancreas_go <- compareCluster(
 )
 
 # Save GO results
-write.csv(as.data.frame(liver_go), "functional_analysis_results/liver_GO_results.csv")
-write.csv(as.data.frame(pancreas_go), "functional_analysis_results/pancreas_GO_results.csv")
-write.csv(as.data.frame(mouse_liver_go), "functional_analysis_results/mouse_liver_GO_results.csv")
-write.csv(as.data.frame(mouse_pancreas_go), "functional_analysis_results/mouse_pancreas_GO_results.csv")
+write.csv(as.data.frame(liver_go_human), "functional_analysis_results/liver_GO_human_results.csv")
+write.csv(as.data.frame(liver_go_mouse), "functional_analysis_results/liver_GO_mouse_results.csv")
+write.csv(as.data.frame(pancreas_go_human), "functional_analysis_results/pancreas_GO_human_results.csv")
+write.csv(as.data.frame(pancreas_go_mouse), "functional_analysis_results/pancreas_GO_mouse_results.csv")
 
-# Visualize GO results
-pdf("functional_analysis_results/liver_GO_dotplot.pdf", width=12, height=10)
-dotplot(liver_go, showCategory=10, title="Liver - Biological Processes")
-dev.off()
+###################### COMBINED GO VISUALIZATION ######################
+# Extract data from GO results for combined visualization
+extract_top_GO <- function(go_result, n=10) {
+  if (is.null(go_result) || nrow(as.data.frame(go_result)) == 0) {
+    return(data.frame())
+  }
+  
+  df <- as.data.frame(go_result)
+  
+  # Get top n categories for each cluster
+  top_df <- data.frame()
+  for (cluster in unique(df$Cluster)) {
+    cluster_df <- df[df$Cluster == cluster, ]
+    cluster_df <- cluster_df[order(cluster_df$p.adjust), ]
+    cluster_df <- cluster_df[1:min(n, nrow(cluster_df)), ]
+    top_df <- rbind(top_df, cluster_df)
+  }
+  
+  return(top_df)
+}
 
-pdf("functional_analysis_results/pancreas_GO_dotplot.pdf", width=12, height=10)
-dotplot(pancreas_go, showCategory=10, title="Pancreas - Biological Processes")
-dev.off()
+# Extract top GO data
+liver_go_human_data <- extract_top_GO(liver_go_human)
+liver_go_mouse_data <- extract_top_GO(liver_go_mouse)
+pancreas_go_human_data <- extract_top_GO(pancreas_go_human)
+pancreas_go_mouse_data <- extract_top_GO(pancreas_go_mouse)
 
-pdf("functional_analysis_results/mouse_liver_GO_dotplot.pdf", width=12, height=10)
-dotplot(mouse_liver_go, showCategory=10, title="Mouse Liver-Specific - Biological Processes")
-dev.off()
+# Add source information
+if (nrow(liver_go_human_data) > 0) liver_go_human_data$Source <- "Human"
+if (nrow(liver_go_mouse_data) > 0) liver_go_mouse_data$Source <- "Mouse" 
+if (nrow(pancreas_go_human_data) > 0) pancreas_go_human_data$Source <- "Human"
+if (nrow(pancreas_go_mouse_data) > 0) pancreas_go_mouse_data$Source <- "Mouse"
 
-pdf("functional_analysis_results/mouse_pancreas_GO_dotplot.pdf", width=12, height=10)
-dotplot(mouse_pancreas_go, showCategory=10, title="Mouse Pancreas-Specific - Biological Processes")
-dev.off()
+# Combine data for visualization
+liver_go_combined <- rbind(liver_go_human_data, liver_go_mouse_data)
+pancreas_go_combined <- rbind(pancreas_go_human_data, pancreas_go_mouse_data)
 
-# KEGG pathway analysis
-# Human/conserved regions
-liver_kegg <- compareCluster(
+# Create custom GO dotplots for liver
+if (nrow(liver_go_combined) > 0) {
+  # Truncate long descriptions
+  liver_go_combined$Description <- substr(liver_go_combined$Description, 1, 50)
+  
+  # Create combined plot for liver
+  pdf("functional_analysis_results/liver_GO_combined_dotplot.pdf", width=14, height=12)
+  p <- ggplot(liver_go_combined, 
+              aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
+    geom_point() +
+    facet_grid(Cluster ~ ., scales="free_y", space="free") +
+    scale_color_continuous(name="-log10(p.adjust)") +
+    scale_size_continuous(name="Gene Count") +
+    theme_bw() +
+    theme(
+      axis.text.y = element_text(size=8),
+      strip.text = element_text(size=10, face="bold"),
+      plot.title = element_text(hjust=0.5, size=12, face="bold")
+    ) +
+    labs(title="Liver - Biological Processes (Combined)", x="Gene Count", y="")
+  print(p)
+  dev.off()
+}
+
+# Create custom GO dotplots for pancreas
+if (nrow(pancreas_go_combined) > 0) {
+  # Truncate long descriptions
+  pancreas_go_combined$Description <- substr(pancreas_go_combined$Description, 1, 50)
+  
+  # Create combined plot for pancreas
+  pdf("functional_analysis_results/pancreas_GO_combined_dotplot.pdf", width=14, height=12)
+  p <- ggplot(pancreas_go_combined, 
+              aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
+    geom_point() +
+    facet_grid(Cluster ~ ., scales="free_y", space="free") +
+    scale_color_continuous(name="-log10(p.adjust)") +
+    scale_size_continuous(name="Gene Count") +
+    theme_bw() +
+    theme(
+      axis.text.y = element_text(size=8),
+      strip.text = element_text(size=10, face="bold"),
+      plot.title = element_text(hjust=0.5, size=12, face="bold")
+    ) +
+    labs(title="Pancreas - Biological Processes (Combined)", x="Gene Count", y="")
+  print(p)
+  dev.off()
+}
+
+###################### KEGG PATHWAY ANALYSIS ######################
+# Human genes (conserved and human-specific)
+liver_kegg_human <- compareCluster(
   liver_gene_list,
   fun = "enrichKEGG",
   organism = "hsa",
@@ -245,7 +315,7 @@ liver_kegg <- compareCluster(
   pvalueCutoff = 0.05
 )
 
-pancreas_kegg <- compareCluster(
+pancreas_kegg_human <- compareCluster(
   pancreas_gene_list,
   fun = "enrichKEGG",
   organism = "hsa",
@@ -253,8 +323,8 @@ pancreas_kegg <- compareCluster(
   pvalueCutoff = 0.05
 )
 
-# Mouse-specific regions
-mouse_liver_kegg <- compareCluster(
+# Mouse-specific genes
+liver_kegg_mouse <- compareCluster(
   mouse_liver_gene_list,
   fun = "enrichKEGG",
   organism = "mmu",
@@ -262,7 +332,7 @@ mouse_liver_kegg <- compareCluster(
   pvalueCutoff = 0.05
 )
 
-mouse_pancreas_kegg <- compareCluster(
+pancreas_kegg_mouse <- compareCluster(
   mouse_pancreas_gene_list,
   fun = "enrichKEGG",
   organism = "mmu",
@@ -271,27 +341,95 @@ mouse_pancreas_kegg <- compareCluster(
 )
 
 # Save KEGG results
-write.csv(as.data.frame(liver_kegg), "functional_analysis_results/liver_KEGG_results.csv")
-write.csv(as.data.frame(pancreas_kegg), "functional_analysis_results/pancreas_KEGG_results.csv")
-write.csv(as.data.frame(mouse_liver_kegg), "functional_analysis_results/mouse_liver_KEGG_results.csv")
-write.csv(as.data.frame(mouse_pancreas_kegg), "functional_analysis_results/mouse_pancreas_KEGG_results.csv")
+write.csv(as.data.frame(liver_kegg_human), "functional_analysis_results/liver_KEGG_human_results.csv")
+write.csv(as.data.frame(liver_kegg_mouse), "functional_analysis_results/liver_KEGG_mouse_results.csv")
+write.csv(as.data.frame(pancreas_kegg_human), "functional_analysis_results/pancreas_KEGG_human_results.csv")
+write.csv(as.data.frame(pancreas_kegg_mouse), "functional_analysis_results/pancreas_KEGG_mouse_results.csv")
 
-# Visualize KEGG results
-pdf("functional_analysis_results/liver_KEGG_dotplot.pdf", width=12, height=8)
-dotplot(liver_kegg, showCategory=10, title="Liver - KEGG Pathways")
-dev.off()
+###################### COMBINED KEGG VISUALIZATION ######################
+# Extract data from KEGG results
+extract_top_KEGG <- function(kegg_result, n=10) {
+  if (is.null(kegg_result) || nrow(as.data.frame(kegg_result)) == 0) {
+    return(data.frame())
+  }
+  
+  df <- as.data.frame(kegg_result)
+  
+  # Get top n categories for each cluster
+  top_df <- data.frame()
+  for (cluster in unique(df$Cluster)) {
+    cluster_df <- df[df$Cluster == cluster, ]
+    cluster_df <- cluster_df[order(cluster_df$p.adjust), ]
+    cluster_df <- cluster_df[1:min(n, nrow(cluster_df)), ]
+    top_df <- rbind(top_df, cluster_df)
+  }
+  
+  return(top_df)
+}
 
-pdf("functional_analysis_results/pancreas_KEGG_dotplot.pdf", width=12, height=8)
-dotplot(pancreas_kegg, showCategory=10, title="Pancreas - KEGG Pathways")
-dev.off()
+# Extract top KEGG data
+liver_kegg_human_data <- extract_top_KEGG(liver_kegg_human)
+liver_kegg_mouse_data <- extract_top_KEGG(liver_kegg_mouse)
+pancreas_kegg_human_data <- extract_top_KEGG(pancreas_kegg_human)
+pancreas_kegg_mouse_data <- extract_top_KEGG(pancreas_kegg_mouse)
 
-pdf("functional_analysis_results/mouse_liver_KEGG_dotplot.pdf", width=12, height=8)
-dotplot(mouse_liver_kegg, showCategory=10, title="Mouse Liver-Specific - KEGG Pathways")
-dev.off()
+# Add source information
+if (nrow(liver_kegg_human_data) > 0) liver_kegg_human_data$Source <- "Human"
+if (nrow(liver_kegg_mouse_data) > 0) liver_kegg_mouse_data$Source <- "Mouse"
+if (nrow(pancreas_kegg_human_data) > 0) pancreas_kegg_human_data$Source <- "Human"
+if (nrow(pancreas_kegg_mouse_data) > 0) pancreas_kegg_mouse_data$Source <- "Mouse"
 
-pdf("functional_analysis_results/mouse_pancreas_KEGG_dotplot.pdf", width=12, height=8)
-dotplot(mouse_pancreas_kegg, showCategory=10, title="Mouse Pancreas-Specific - KEGG Pathways")
-dev.off()
+# Combine data for visualization
+liver_kegg_combined <- rbind(liver_kegg_human_data, liver_kegg_mouse_data)
+pancreas_kegg_combined <- rbind(pancreas_kegg_human_data, pancreas_kegg_mouse_data)
+
+# Create custom KEGG dotplots for liver
+if (nrow(liver_kegg_combined) > 0) {
+  # Truncate long descriptions
+  liver_kegg_combined$Description <- substr(liver_kegg_combined$Description, 1, 50)
+  
+  # Create combined plot for liver
+  pdf("functional_analysis_results/liver_KEGG_combined_dotplot.pdf", width=14, height=12)
+  p <- ggplot(liver_kegg_combined, 
+              aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
+    geom_point() +
+    facet_grid(Cluster ~ ., scales="free_y", space="free") +
+    scale_color_continuous(name="-log10(p.adjust)") +
+    scale_size_continuous(name="Gene Count") +
+    theme_bw() +
+    theme(
+      axis.text.y = element_text(size=8),
+      strip.text = element_text(size=10, face="bold"),
+      plot.title = element_text(hjust=0.5, size=12, face="bold")
+    ) +
+    labs(title="Liver - KEGG Pathways (Combined)", x="Gene Count", y="")
+  print(p)
+  dev.off()
+}
+
+# Create custom KEGG dotplots for pancreas
+if (nrow(pancreas_kegg_combined) > 0) {
+  # Truncate long descriptions
+  pancreas_kegg_combined$Description <- substr(pancreas_kegg_combined$Description, 1, 50)
+  
+  # Create combined plot for pancreas
+  pdf("functional_analysis_results/pancreas_KEGG_combined_dotplot.pdf", width=14, height=12)
+  p <- ggplot(pancreas_kegg_combined, 
+              aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
+    geom_point() +
+    facet_grid(Cluster ~ ., scales="free_y", space="free") +
+    scale_color_continuous(name="-log10(p.adjust)") +
+    scale_size_continuous(name="Gene Count") +
+    theme_bw() +
+    theme(
+      axis.text.y = element_text(size=8),
+      strip.text = element_text(size=10, face="bold"),
+      plot.title = element_text(hjust=0.5, size=12, face="bold")
+    ) +
+    labs(title="Pancreas - KEGG Pathways (Combined)", x="Gene Count", y="")
+  print(p)
+  dev.off()
+}
 
 # Create a summary report with statistics and top enriched terms
 sink("functional_analysis_results/functional_analysis_summary.txt")
@@ -313,190 +451,7 @@ cat("Genes associated with pancreas conserved regions:", length(pancreas_conserv
 cat("Genes associated with human pancreas-specific regions:", length(human_pancreas_specific_genes), "\n")
 cat("Genes associated with mouse pancreas-specific regions:", length(mouse_pancreas_specific_genes), "\n\n")
 
-# Function to extract top terms
-getTopTerms <- function(go_result, cluster_name, n=10) {
-  df <- as.data.frame(go_result)
-  subset_df <- df[df$Cluster == cluster_name, ]
-  if(nrow(subset_df) > 0) {
-    subset_df <- subset_df[order(subset_df$p.adjust), ]
-    return(subset_df[1:min(n, nrow(subset_df)), c("Description", "p.adjust", "Count")])
-  } else {
-    return(data.frame(Description=character(0), p.adjust=numeric(0), Count=numeric(0)))
-  }
-}
-
-cat("## Top Biological Processes - Liver Conserved Regions\n")
-liver_conserved_terms <- getTopTerms(liver_go, "Conserved")
-if(nrow(liver_conserved_terms) > 0) {
-  for(i in 1:nrow(liver_conserved_terms)) {
-    cat(i, ". ", liver_conserved_terms$Description[i], 
-        " (p-adj = ", signif(liver_conserved_terms$p.adjust[i], 3), 
-        ", genes = ", liver_conserved_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-cat("\n## Top Biological Processes - Human Liver-Specific Regions\n")
-human_liver_terms <- getTopTerms(liver_go, "Human_Specific")
-if(nrow(human_liver_terms) > 0) {
-  for(i in 1:nrow(human_liver_terms)) {
-    cat(i, ". ", human_liver_terms$Description[i], 
-        " (p-adj = ", signif(human_liver_terms$p.adjust[i], 3), 
-        ", genes = ", human_liver_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-cat("\n## Top Biological Processes - Mouse Liver-Specific Regions\n")
-mouse_liver_terms <- getTopTerms(mouse_liver_go, "Mouse_Liver_Specific")
-if(nrow(mouse_liver_terms) > 0) {
-  for(i in 1:nrow(mouse_liver_terms)) {
-    cat(i, ". ", mouse_liver_terms$Description[i], 
-        " (p-adj = ", signif(mouse_liver_terms$p.adjust[i], 3), 
-        ", genes = ", mouse_liver_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-cat("\n## Top Biological Processes - Pancreas Conserved Regions\n")
-pancreas_conserved_terms <- getTopTerms(pancreas_go, "Conserved")
-if(nrow(pancreas_conserved_terms) > 0) {
-  for(i in 1:nrow(pancreas_conserved_terms)) {
-    cat(i, ". ", pancreas_conserved_terms$Description[i], 
-        " (p-adj = ", signif(pancreas_conserved_terms$p.adjust[i], 3), 
-        ", genes = ", pancreas_conserved_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-cat("\n## Top Biological Processes - Human Pancreas-Specific Regions\n")
-human_pancreas_terms <- getTopTerms(pancreas_go, "Human_Specific")
-if(nrow(human_pancreas_terms) > 0) {
-  for(i in 1:nrow(human_pancreas_terms)) {
-    cat(i, ". ", human_pancreas_terms$Description[i], 
-        " (p-adj = ", signif(human_pancreas_terms$p.adjust[i], 3), 
-        ", genes = ", human_pancreas_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-cat("\n## Top Biological Processes - Mouse Pancreas-Specific Regions\n")
-mouse_pancreas_terms <- getTopTerms(mouse_pancreas_go, "Mouse_Pancreas_Specific")
-if(nrow(mouse_pancreas_terms) > 0) {
-  for(i in 1:nrow(mouse_pancreas_terms)) {
-    cat(i, ". ", mouse_pancreas_terms$Description[i], 
-        " (p-adj = ", signif(mouse_pancreas_terms$p.adjust[i], 3), 
-        ", genes = ", mouse_pancreas_terms$Count[i], ")\n", sep="")
-  }
-} else {
-  cat("No significant enrichment found\n")
-}
-
-# Extract KEGG pathway information
-cat("\n## Top KEGG Pathways\n")
-for(tissue in c("Liver", "Pancreas")) {
-  for(region in c("Conserved", "Human-Specific", "Mouse-Specific")) {
-    cat("\n### ", tissue, " - ", region, "\n", sep="")
-    
-    if(tissue == "Liver" && region == "Conserved") {
-      kegg_df <- as.data.frame(liver_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Conserved", ]
-    } else if(tissue == "Liver" && region == "Human-Specific") {
-      kegg_df <- as.data.frame(liver_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Human_Specific", ]
-    } else if(tissue == "Liver" && region == "Mouse-Specific") {
-      kegg_df <- as.data.frame(mouse_liver_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Mouse_Liver_Specific", ]
-    } else if(tissue == "Pancreas" && region == "Conserved") {
-      kegg_df <- as.data.frame(pancreas_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Conserved", ]
-    } else if(tissue == "Pancreas" && region == "Human-Specific") {
-      kegg_df <- as.data.frame(pancreas_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Human_Specific", ]
-    } else if(tissue == "Pancreas" && region == "Mouse-Specific") {
-      kegg_df <- as.data.frame(mouse_pancreas_kegg)
-      kegg_subset <- kegg_df[kegg_df$Cluster == "Mouse_Pancreas_Specific", ]
-    }
-    
-    if(nrow(kegg_subset) > 0) {
-      kegg_subset <- kegg_subset[order(kegg_subset$p.adjust), ]
-      for(i in 1:min(5, nrow(kegg_subset))) {
-        cat("- ", kegg_subset$Description[i], 
-            " (p-adj = ", signif(kegg_subset$p.adjust[i], 3), 
-            ", genes = ", kegg_subset$Count[i], ")\n", sep="")
-      }
-    } else {
-      cat("No significant enrichment found\n")
-    }
-  }
-}
-
-cat("\n## Comparative Analysis of Conserved vs. Species-Specific Regions\n")
-
-
-
-
-
-# Function to safely extract annotation statistics
-getAnnoStats <- function(anno_obj) {
-  summ <- summary(anno_obj)
-  if ("annoStat" %in% names(summ) && !is.null(summ$annoStat)) {
-    return(summ$annoStat$Frequency)
-  } else {
-    # If the expected structure isn't found, return a message
-    return("Annotation statistics not available in expected format")
-  }
-}
-
-# For Liver features
-cat("\n### Liver: Annotation of peaks in different genomic features\n")
-cat("\nConserved Regions:\n")
-print(summary(liver_conserved_anno))
-cat("\nHuman-Specific Regions:\n")
-print(summary(human_liver_specific_anno))
-cat("\nMouse-Specific Regions:\n")
-print(summary(mouse_liver_specific_anno))
-
-# For Pancreas features
-cat("\n### Pancreas: Annotation of peaks in different genomic features\n")
-cat("\nConserved Regions:\n")
-print(summary(pancreas_conserved_anno))
-cat("\nHuman-Specific Regions:\n")
-print(summary(human_pancreas_specific_anno))
-cat("\nMouse-Specific Regions:\n")
-print(summary(mouse_pancreas_specific_anno))
-
-
-
-
-
-
-
-
-
-
-
-#cat("\n### Liver: Percentage of peaks in different genomic features\n")
-#liver_features <- rbind(
-#  Conserved = summary(liver_conserved_anno)$annoStat$Frequency,
-#  Human_Specific = summary(human_liver_specific_anno)$annoStat$Frequency,
-#  Mouse_Specific = summary(mouse_liver_specific_anno)$annoStat$Frequency
-#)
-#print(liver_features)
-
-#cat("\n### Pancreas: Percentage of peaks in different genomic features\n")
-#pancreas_features <- rbind(
-#  Conserved = summary(pancreas_conserved_anno)$annoStat$Frequency,
-#  Human_Specific = summary(human_pancreas_specific_anno)$annoStat$Frequency,
-#  Mouse_Specific = summary(mouse_pancreas_specific_anno)$annoStat$Frequency
-#)
-#print(pancreas_features)
-#sink()
-
 # Print completion message
-cat("Functional analysis complete! All results have been saved to 'functional_analysis_results' directory.\n")
+cat("Functional analysis complete! Combined GO and KEGG plots have been created for each tissue.\n")
+cat("Results saved to the 'functional_analysis_results' directory.\n")
+
