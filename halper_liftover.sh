@@ -71,8 +71,8 @@ for SRC in Human Mouse; do
       > "$OUTPUT_DIR/${TAG}_${TGT,,}_mapped.bed"
 
     echo "[$(date +%T)] → Wrote:"
-    echo "   • $MAPPED_NP_GZ"
-    echo "   • $OUTPUT_DIR/${TAG}_${TGT,,}_mapped.bed"
+    echo " $MAPPED_NP_GZ"
+    echo " $OUTPUT_DIR/${TAG}_${TGT,,}_mapped.bed"
   done
 done
 
