@@ -8,6 +8,13 @@
 #SBATCH --mem=16G
 #SBATCH --partition=RM
 
+# Check if correct number of arguments provided
+if [ "$#" -ne 8 ]; then
+    echo "Error: Incorrect number of arguments"
+    echo "Usage: sbatch cross_species_analysis.sh <human_liver_peaks> <human_pancreas_peaks> <mouse_liver_peaks> <mouse_pancreas_peaks> <human_liver_to_mouse_halper> <human_pancreas_to_mouse_halper> <mouse_liver_to_human_halper> <mouse_pancreas_to_human_halper>"
+    exit 1
+fi
+
 # ===== CONFIGURATION =====
 # Load required modules
 module load bedtools/2.30.0 
@@ -19,19 +26,38 @@ TISSUE_COMP_DIR="$RESULTS_DIR/tissue_comparison"
 PROCESSED_DIR="$CROSS_SPECIES_DIR/processed_files"
 mkdir -p $RESULTS_DIR $CROSS_SPECIES_DIR $TISSUE_COMP_DIR $PROCESSED_DIR
 
-# Define input files
+# Define input files from command line arguments
 # Original peak files
-HUMAN_LIVER_PEAKS="narrowPeak/human_liver.narrowPeak"
-HUMAN_PANCREAS_PEAKS="narrowPeak/human_pancreas.narrowPeak"
-MOUSE_LIVER_PEAKS="narrowPeak/mouse_liver.narrowPeak"
-MOUSE_PANCREAS_PEAKS="narrowPeak/mouse_pancreas.narrowPeak"
+HUMAN_LIVER_PEAKS="$1"
+HUMAN_PANCREAS_PEAKS="$2"
+MOUSE_LIVER_PEAKS="$3"
+MOUSE_PANCREAS_PEAKS="$4"
 
-# HALPER output files 
-HUMAN_LIVER_TO_MOUSE_HALPER="mapped_peaks/human_liver.HumanToMouse.HALPER.narrowPeak.gz"
-HUMAN_PANCREAS_TO_MOUSE_HALPER="mapped_peaks/human_pancreas.HumanToMouse.HALPER.narrowPeak.gz"
-# HALPER output for mouse to human
-MOUSE_LIVER_TO_HUMAN_HALPER="mapped_peaks/mouse_liver.MouseToHuman.HALPER.narrowPeak.gz"
-MOUSE_PANCREAS_TO_HUMAN_HALPER="mapped_peaks/mouse_pancreas.MouseToHuman.HALPER.narrowPeak.gz"
+# HALPER output files
+HUMAN_LIVER_TO_MOUSE_HALPER="$5"
+HUMAN_PANCREAS_TO_MOUSE_HALPER="$6"
+MOUSE_LIVER_TO_HUMAN_HALPER="$7"
+MOUSE_PANCREAS_TO_HUMAN_HALPER="$8"
+
+# Log input files
+echo "===== INPUT FILES ====="
+echo "Human liver peaks: $HUMAN_LIVER_PEAKS"
+echo "Human pancreas peaks: $HUMAN_PANCREAS_PEAKS"
+echo "Mouse liver peaks: $MOUSE_LIVER_PEAKS"
+echo "Mouse pancreas peaks: $MOUSE_PANCREAS_PEAKS"
+echo "Human liver to mouse HALPER: $HUMAN_LIVER_TO_MOUSE_HALPER"
+echo "Human pancreas to mouse HALPER: $HUMAN_PANCREAS_TO_MOUSE_HALPER"
+echo "Mouse liver to human HALPER: $MOUSE_LIVER_TO_HUMAN_HALPER"
+echo "Mouse pancreas to human HALPER: $MOUSE_PANCREAS_TO_HUMAN_HALPER"
+echo ""
+
+# Check if input files exist
+for file in "$HUMAN_LIVER_PEAKS" "$HUMAN_PANCREAS_PEAKS" "$MOUSE_LIVER_PEAKS" "$MOUSE_PANCREAS_PEAKS" "$HUMAN_LIVER_TO_MOUSE_HALPER" "$HUMAN_PANCREAS_TO_MOUSE_HALPER" "$MOUSE_LIVER_TO_HUMAN_HALPER" "$MOUSE_PANCREAS_TO_HUMAN_HALPER"; do
+    if [ ! -f "$file" ]; then
+        echo "Error: Input file $file does not exist"
+        exit 1
+    fi
+done
 
 # Function to safely calculate percentages
 calc_pct() {
@@ -310,17 +336,4 @@ echo "-----------------------------" >> "$CROSS_SPECIES_SUMMARY_FILE"
 echo "Mouse liver regions conserved in human liver: $MOUSE_LIVER_CONSERVED_IN_HUMAN_LIVER_COUNT - ${MOUSE_LIVER_CONSERVED_IN_HUMAN_LIVER_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
 echo "Mouse liver regions conserved in human pancreas: $MOUSE_LIVER_CONSERVED_IN_HUMAN_PANCREAS_COUNT - ${MOUSE_LIVER_CONSERVED_IN_HUMAN_PANCREAS_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
 echo "Mouse pancreas regions conserved in human pancreas: $MOUSE_PANCREAS_CONSERVED_IN_HUMAN_PANCREAS_COUNT - ${MOUSE_PANCREAS_CONSERVED_IN_HUMAN_PANCREAS_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Mouse pancreas regions conserved in human liver: $MOUSE_PANCREAS_CONSERVED_IN_HUMAN_LIVER_COUNT - ${MOUSE_PANCREAS_CONSERVED_IN_HUMAN_LIVER_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "" >> "$CROSS_SPECIES_SUMMARY_FILE"
-
-echo "SPECIES-SPECIFIC UNIQUE REGIONS" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "-----------------------------" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Human liver-unique regions: $HUMAN_LIVER_NOT_CONSERVED_COUNT - ${HUMAN_LIVER_UNIQUE_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Human pancreas-unique regions: $HUMAN_PANCREAS_NOT_CONSERVED_COUNT - ${HUMAN_PANCREAS_UNIQUE_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Mouse liver-unique regions: $MOUSE_LIVER_NOT_CONSERVED_COUNT - ${MOUSE_LIVER_UNIQUE_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Mouse pancreas-unique regions: $MOUSE_PANCREAS_NOT_CONSERVED_COUNT - ${MOUSE_PANCREAS_UNIQUE_RATE}%" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "" >> "$CROSS_SPECIES_SUMMARY_FILE"
-
-echo "SUMMARY OF FINDINGS" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "-----------------------------" >> "$CROSS_SPECIES_SUMMARY_FILE"
-echo "Tissue sharing within species:" >> "$CROSS_SPECIES_SUMMARY_FILE"
+echo "Mouse pancreas regions conserved in human liver: $MOUSE_PANCREAS_CONSERVED_IN_HUMAN_LIVER_COUNT - ${
