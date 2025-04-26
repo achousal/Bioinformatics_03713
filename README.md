@@ -96,6 +96,7 @@ Run the entire pipeline with:
 
 ```bash
 bash run_full_pipeline.sh
+(be sure to go through the code and set filepath to your own files)
 ```
 
 This script will:
