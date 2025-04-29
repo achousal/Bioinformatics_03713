@@ -142,6 +142,10 @@ Key parameters can be set at the top of `run_full_pipeline.sh`, including:
 - **HALPER and MEME Suite:** Ensure correct Python and software versions for compatibility.
 
 ---
+##Cite Us
+
+
+---
 
 ## References
 
