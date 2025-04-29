@@ -143,7 +143,6 @@ Key parameters can be set at the top of `run_full_pipeline.sh`, including:
 
 ---
 ## Cite Us
-## 📖 Citation
 
 If you use this pipeline in your research, please cite:
 
