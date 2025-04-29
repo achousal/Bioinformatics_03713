@@ -19,6 +19,9 @@ module load anaconda3
 conda init
 source activate hal
 
+export PATH=/jet/home/achousal/repos/hal/bin:${PATH}
+export PYTHONPATH=/jet/home/achousal/repos/halLiftover-postprocessing:${PYTHONPATH}
+
 # ===== CONFIGURATION =====
 BASE_DIR="/ocean/projects/bio230007p/achousal"
 HALPER_DIR="/jet/home/achousal/repos/halLiftover-postprocessing"
