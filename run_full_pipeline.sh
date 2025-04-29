@@ -48,6 +48,10 @@ MOUSE_PANCREAS_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Pancreas/peak/idr_reproducibil
 HUMAN_GENOME="$GENOME_DIR/HumanGenomeInfo/hg38.fa"
 MOUSE_GENOME="$GENOME_DIR/MouseGenomeInfo/mm10.fa"
 
+# Motif databases
+MOTIF_DB_HUMAN="$GENOME_DIR/CIS-BP_2.00/Homo_sapiens.meme"
+MOTIF_DB_MOUSE="$GENOME_DIR/CIS-BP_2.00/Mus_musculus.meme"
+
 # Index genomes
 samtools faidx "$HUMAN_GENOME"
 samtools faidx "$MOUSE_GENOME"
@@ -450,10 +454,10 @@ for sample in "${samples[@]}"; do
 
   if [[ "$SPECIES" == "human" ]]; then
     GENOME="$HUMAN_GENOME"
-    MOTIF_DB="$GENOME_DIR/CIS-BP_2.00/Homo_sapiens.meme"
+    MOTIF_DB="$MOTIF_DB_HUMAN"
   else
     GENOME="$MOUSE_GENOME"
-    MOTIF_DB="$GENOME_DIR/CIS-BP_2.00/Mus_musculus.meme"
+    MOTIF_DB="$MOTIF_DB_MOUSE"
   fi
 
   bedtools getfasta -fi "$GENOME" -bed "$BED_FILE" -fo "$FASTA_FILE"
