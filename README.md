@@ -43,8 +43,8 @@ We aim to answer three primary questions with these results:
 1. **Data Quality Control**
 ATAC-seq quality reports (provided) from human and mouse liver, pancreas, and ovary were used to determine which datasets to use for further analysis. The ovarian dataset consisted of short read lengths for both human and mouse, and was thrown out. This step is essential for ensuring informative results. 
 2. **Cross-Species Mapping**
-Open chromatin regions identified from ATAC-seq are mapped between human and mouse genomes using HALPER (HAL Liftover Post-processing for Epigenomic Regions) with Cactus whole-genome alignments. This step is crucial for identifying orthologous regulatory elements between species, allowing direct comparison of regulatory activity at corresponding genomic locations. The mapping process accounts for genomic rearrangements and evolutionary changes that have occurred since the divergence of humans and mice. ***add something about IDR optimal narrow peaks?***
-3. **Conservation and Specificity Analysis** (Question 1)
+Open chromatin regions identified from ATAC-seq are mapped between human and mouse genomes using HALPER (HAL Liftover Post-processing for Epigenomic Regions) with Cactus whole-genome alignments. This step is crucial for identifying orthologous regulatory elements between species, allowing direct comparison of regulatory activity at corresponding genomic locations. The mapping process accounts for genomic rearrangements and evolutionary changes that have occurred since the divergence of humans and mice. 
+3. **Conservation and Specificity Analysis (Question 1)**
 This step identifies and categorizes regulatory elements based on their conservation patterns: elements conserved between species for the same tissue, elements shared across tissues within a species, and elements specific to a tissue or species. By quantifying these different categories, we can directly address whether regulatory element activity is more conserved across tissues or species. This analysis provides insights into the evolutionary constraints on gene regulation.
 4. **Functional Annotation (Question 3)** 
 Regulatory elements identified in previous steps are annotated and analyzed for GO term enrichment with ChIPseeker. This analysis connects regulatory elements to their potential target genes and biological functions, revealing which biological processes are regulated by conserved versus species-specific elements. The functional analysis helps determine whether similar biological processes are regulated by conserved elements across species, despite potential differences in the specific regulatory elements.
@@ -75,18 +75,21 @@ Install dependencies using conda. Closely follow installation instructions for i
 ## Input Files
 
 - **ATAC-seq peak files:**
-    - Human: `/ocean/projects/bio230007p/ikaplow/HumanAtac/[tissue]/idr_reproducibility/idr.optimal_peak.narrowPeak.gz`
-    - Mouse: `/ocean/projects/bio230007p/ikaplow/MouseAtac/[tissue]/idr_reproducibility/idr.optimal_peak.narrowPeak.gz`
-- **Cactus alignment:**
-    - `/ocean/projects/bio230007p/ikaplow/Alignments/12-mammals.hal`
+    - 4 total: human liver, human pancreas, mouse liver, mouse pancreas
+    - `idr.optimal_peak.narrowPeak.gz`
+    - Pipeline automatically decrompresses 
+- **Cactus (multi-species) alignment:**
+    - `alignment.hal`
 - **Genome annotations:**
-    - Human: `/ocean/projects/bio230007p/ssabata/HumanGenomeInfo/gencode.v47.annotation.gff3.gz`
-    - Mouse: `/ocean/projects/bio230007p/ikaplow/MouseGenomeInfo/gencode.vM25.annotation.gtf.gz`
+    - 2 total: human, mouse
+    - `annotation.gff3.gz`
+    - Pipeline automatically decrompresses 
 - **Reference genomes:**
-    - Human: `/ocean/projects/bio230007p/ssabata/HumanGenomeInfo/hg38.fa`
-    - Mouse: `/ocean/projects/bio230007p/ikaplow/MouseGenomeInfo/GRCm38.primary_assembly.genome.fa`
+    - 2 total: human, mouse
+    - `ref_genome.fa`
 - **Motif database:**
-    - `/ocean/projects/bio230007p/ikaplow/CIS-BP_2.00`
+    - 2 total: human, mouse
+    - `motif_db.meme`
 
 ---
 
