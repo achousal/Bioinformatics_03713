@@ -145,7 +145,7 @@ Key parameters can be set at the top of `run_full_pipeline.sh`, including:
 
 ## References
 
-- HALPER: Xiaoyu Zhang, Irene Kaplow, Morgan Wirthlin, Tyler Park, Andreas Pfenning. HALPER facilitates the identification of regulatory element orthologs across species. Bioinformatics, Volume 36, Issue 15, 1 August 2020, Pages 4339-4340. [https://github.com/pfenninglab/halLiftover-postprocessing](https://github.com/pfenninglab/halLiftover-postprocessing)]
+- HALPER: Xiaoyu Zhang, Irene Kaplow, Morgan Wirthlin, Tyler Park, Andreas Pfenning. HALPER facilitates the identification of regulatory element orthologs across species. Bioinformatics, Volume 36, Issue 15, 1 August 2020, Pages 4339-4340. [https://github.com/pfenninglab/halLiftover-postprocessing]
 - [MEME Suite: https://meme-suite.org/](https://meme-suite.org/)
 - [ChIPseeker: https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
 - [BEDTools: https://bedtools.readthedocs.io/](https://bedtools.readthedocs.io/)
