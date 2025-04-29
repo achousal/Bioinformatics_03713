@@ -145,10 +145,10 @@ Key parameters can be set at the top of `run_full_pipeline.sh`, including:
 
 ## References
 
-- HALPER: Xiaoyu Zhang, Irene Kaplow, Morgan Wirthlin, Tyler Park, Andreas Pfenning. HALPER facilitates the identification of regulatory element orthologs across species. Bioinformatics, Volume 36, Issue 15, 1 August 2020, Pages 4339-4340. [https://github.com/pfenninglab/halLiftover-postprocessing](https://github.com/pfenninglab/halLiftover-postprocessing)
-- MEME Suite: Bailey TL, Johnson J, Grant CE, Noble WS. The MEME Suite. Nucleic Acids Res. 2015;43(W1):W39-W49. doi:10.1093/nar/gkv416 [https://meme-suite.org/](https://meme-suite.org/)
-- ChIPseeker: Yu G, Wang LG, He QY. ChIPseeker: an R/Bioconductor package for ChIP peak annotation, comparison and visualization. Bioinformatics. 2015;31(14):2382-2383. doi:10.1093/bioinformatics/btv145 [https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
-- BEDTools: Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 2010;26(6):841-842. doi:10.1093/bioinformatics/btq033 [https://bedtools.readthedocs.io/](https://bedtools.readthedocs.io/)
+- HALPER: Xiaoyu Zhang, Irene Kaplow, Morgan Wirthlin, Tyler Park, Andreas Pfenning. HALPER facilitates the identification of regulatory element orthologs across species. Bioinformatics, Volume 36, Issue 15, 1 August 2020, Pages 4339-4340. 
+- MEME Suite: Bailey TL, Johnson J, Grant CE, Noble WS. The MEME Suite. Nucleic Acids Res. 2015;43(W1):W39-W49. doi:10.1093/nar/gkv416 
+- ChIPseeker: Yu G, Wang LG, He QY. ChIPseeker: an R/Bioconductor package for ChIP peak annotation, comparison and visualization. Bioinformatics. 2015;31(14):2382-2383. doi:10.1093/bioinformatics/btv145 
+- BEDTools: Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing genomic features. Bioinformatics. 2010;26(6):841-842. doi:10.1093/bioinformatics/btq033 
 
 ---
 
