@@ -17,26 +17,17 @@ module load MEME-suite/5.4.1
 module load samtools
 module load anaconda3
 conda init
-source activate hal
+source activate hal    # make sure halper environment is named `hal`
 
+# ===== CONFIGURATION: MODIFY THIS ACCORDING TO YOUR PATHS =====
+# REFER TO README
+# HALPER CONFIG
 export PATH=/jet/home/achousal/repos/hal/bin:${PATH}
 export PYTHONPATH=/jet/home/achousal/repos/halLiftover-postprocessing:${PYTHONPATH}
 
-# ===== CONFIGURATION =====
-BASE_DIR="/ocean/projects/bio230007p/achousal"
-HALPER_DIR="/jet/home/achousal/repos/halLiftover-postprocessing"
-CACTUS_ALIGNMENT="/ocean/projects/bio230007p/achousal/ikaplow/Alignments/10plusway-master.hal"
-CLASSIFIED_DIR="$BASE_DIR/promoters_enhancers"
-GENOME_DIR="$BASE_DIR/ikaplow"
-OUTPUT_DIR="$BASE_DIR/results"
-MAPPED_DIR="$OUTPUT_DIR/mapped_peaks"
-SEQUENCE_DIR="$OUTPUT_DIR/sequences"
-MEME_RESULTS="$OUTPUT_DIR/meme_results"
-mkdir -p logs "$OUTPUT_DIR" "$MAPPED_DIR" "$SEQUENCE_DIR" "$MEME_RESULTS"
-
 # GTF files
-HUMAN_GTF="$GENOME_DIR/HumanGenomeInfo/gencode.v47.annotation.gff3.gz"
-MOUSE_GTF="$GENOME_DIR/MouseGenomeInfo/gencode.vM10.annotation.gff3.gz"
+HUMAN_GTF="$BASE_DIR/ikaplow/HumanGenomeInfo/gencode.v47.annotation.gff3.gz"
+MOUSE_GTF="$BASE_DIR/ikaplow/MouseGenomeInfo/gencode.vM10.annotation.gff3.gz"
 
 # Raw peak files
 HUMAN_LIVER_PEAKS="$BASE_DIR/ikaplow/HumanAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
@@ -45,12 +36,27 @@ MOUSE_LIVER_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Liver/peak/idr_reproducibility/id
 MOUSE_PANCREAS_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
 
 # Genome FASTA files
-HUMAN_GENOME="$GENOME_DIR/HumanGenomeInfo/hg38.fa"
-MOUSE_GENOME="$GENOME_DIR/MouseGenomeInfo/mm10.fa"
+HUMAN_GENOME="$BASE_DIR/ikaplow/HumanGenomeInfo/hg38.fa"
+MOUSE_GENOME="$BASE_DIR/ikaplow/MouseGenomeInfo/mm10.fa"
 
 # Motif databases
-MOTIF_DB_HUMAN="$GENOME_DIR/CIS-BP_2.00/Homo_sapiens.meme"
-MOTIF_DB_MOUSE="$GENOME_DIR/CIS-BP_2.00/Mus_musculus.meme"
+MOTIF_DB_HUMAN="$BASE_DIR/ikaplow/CIS-BP_2.00/Homo_sapiens.meme"
+MOTIF_DB_MOUSE="$BASE_DIR/ikaplow/CIS-BP_2.00/Mus_musculus.meme"
+
+# Multi-species alignment
+CACTUS_ALIGNMENT="/ocean/projects/bio230007p/achousal/ikaplow/Alignments/10plusway-master.hal"
+
+BASE_DIR="/ocean/projects/bio230007p/achousal"
+HALPER_DIR="/jet/home/achousal/repos/halLiftover-postprocessing"
+
+# ===== CONFIGURATION END =====
+
+CLASSIFIED_DIR="$BASE_DIR/promoters_enhancers"
+OUTPUT_DIR="$BASE_DIR/results"
+MAPPED_DIR="$OUTPUT_DIR/mapped_peaks"
+SEQUENCE_DIR="$OUTPUT_DIR/sequences"
+MEME_RESULTS="$OUTPUT_DIR/meme_results"
+mkdir -p logs "$OUTPUT_DIR" "$MAPPED_DIR" "$SEQUENCE_DIR" "$MEME_RESULTS"
 
 # Index genomes
 samtools faidx "$HUMAN_GENOME"
