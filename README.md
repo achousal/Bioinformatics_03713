@@ -95,8 +95,42 @@ Install dependencies using conda. Closely follow installation instructions for i
 
 ## Usage
 
-First, makes ure to edit the `CONFIGURATION` section of `run_full_pipeline.sh` based on 
-your file paths. 
+First, make sure to edit the `CONFIGURATION` section of `run_full_pipeline.sh` based on 
+your file paths: 
+
+```
+# ===== CONFIGURATION: MODIFY THIS ACCORDING TO YOUR PATHS =====
+# REFER TO README
+# HALPER CONFIG
+export PATH=/jet/home/achousal/repos/hal/bin:${PATH}
+export PYTHONPATH=/jet/home/achousal/repos/halLiftover-postprocessing:${PYTHONPATH}
+
+# GTF files
+HUMAN_GTF="$BASE_DIR/ikaplow/HumanGenomeInfo/gencode.v47.annotation.gff3.gz"
+MOUSE_GTF="$BASE_DIR/ikaplow/MouseGenomeInfo/gencode.vM10.annotation.gff3.gz"
+
+# Raw peak files
+HUMAN_LIVER_PEAKS="$BASE_DIR/ikaplow/HumanAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
+HUMAN_PANCREAS_PEAKS="$BASE_DIR/ikaplow/HumanAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
+MOUSE_LIVER_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
+MOUSE_PANCREAS_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
+
+# Genome FASTA files
+HUMAN_GENOME="$BASE_DIR/ikaplow/HumanGenomeInfo/hg38.fa"
+MOUSE_GENOME="$BASE_DIR/ikaplow/MouseGenomeInfo/mm10.fa"
+
+# Motif databases
+MOTIF_DB_HUMAN="$BASE_DIR/ikaplow/CIS-BP_2.00/Homo_sapiens.meme"
+MOTIF_DB_MOUSE="$BASE_DIR/ikaplow/CIS-BP_2.00/Mus_musculus.meme"
+
+# Multi-species alignment
+CACTUS_ALIGNMENT="/ocean/projects/bio230007p/achousal/ikaplow/Alignments/10plusway-master.hal"
+
+BASE_DIR="/ocean/projects/bio230007p/achousal"
+HALPER_DIR="/jet/home/achousal/repos/halLiftover-postprocessing"
+
+# ===== CONFIGURATION END =====
+```
 
 Ensure you install HALPER exactly based on [this](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) guide. If the guide is not 
 followed exactly, this pipeline will not work. 
