@@ -34,17 +34,23 @@ library(enrichplot)
 library(ggplot2)
 
 # Set file paths (adjust as needed)
-base_path <- "/Users/yinuoyang/Desktop/cmu/03713/results/cross_species/"
+args <- commandArgs(trailingOnly = TRUE)
+input_file1 <- args[1]
+input_file2 <- args[2]
+input_file3 <- args[3]
+input_file4 <- args[4]
+input_file5 <- args[5]
+input_file6 <- args[6]
 
 # Import BED files
 # Conservation and specificity files
-liver_conserved <- readPeakFile(paste0(base_path, "human_liver_conserved_in_mouse_liver.bed"))
-human_liver_specific <- readPeakFile(paste0(base_path, "human_liver_not_conserved_in_mouse.bed"))
-mouse_liver_specific <- readPeakFile(paste0(base_path, "mouse_liver_not_conserved_in_human.bed"))
+liver_conserved <- readPeakFile(input_file1)
+human_liver_specific <- readPeakFile(input_file2)
+mouse_liver_specific <- readPeakFile(input_file3)
 
-pancreas_conserved <- readPeakFile(paste0(base_path, "human_pancreas_conserved_in_mouse_pancreas.bed"))
-human_pancreas_specific <- readPeakFile(paste0(base_path, "human_pancreas_not_conserved_in_mouse.bed"))
-mouse_pancreas_specific <- readPeakFile(paste0(base_path, "mouse_pancreas_not_conserved_in_human.bed"))
+pancreas_conserved <- readPeakFile(input_file4)
+human_pancreas_specific <- readPeakFile(input_file5)
+mouse_pancreas_specific <- readPeakFile(input_file6)
 
 # Set up annotation databases
 txdb_human <- TxDb.Hsapiens.UCSC.hg38.knownGene
@@ -68,22 +74,7 @@ mouse_pancreas_specific_anno <- annotatePeak(mouse_pancreas_specific, tssRegion=
                                              TxDb=txdb_mouse, annoDb="org.Mm.eg.db")
 
 # Create a directory for results
-dir.create("functional_analysis_results", showWarnings = FALSE)
-
-# Print annotation summaries
-cat("Annotation Summary for Key Regions\n")
-cat("\nLiver conserved regions:\n")
-print(summary(liver_conserved_anno))
-cat("\nHuman liver-specific regions:\n")
-print(summary(human_liver_specific_anno))
-cat("\nMouse liver-specific regions:\n")
-print(summary(mouse_liver_specific_anno))
-cat("\nPancreas conserved regions:\n")
-print(summary(pancreas_conserved_anno))
-cat("\nHuman pancreas-specific regions:\n")
-print(summary(human_pancreas_specific_anno))
-cat("\nMouse pancreas-specific regions:\n")
-print(summary(mouse_pancreas_specific_anno))
+dir.create("cross-species_results", showWarnings = FALSE)
 
 # Create annotation lists for visualization
 liver_anno_list <- list(
@@ -100,38 +91,13 @@ pancreas_anno_list <- list(
 
 # Visualize genomic feature distribution
 # Liver genomic annotations
-pdf("functional_analysis_results/liver_genomic_features_bar.pdf", width=10, height=6)
+pdf("cross-species_results/liver_genomic_features_bar.pdf", width=10, height=6)
 plotAnnoBar(liver_anno_list)
 dev.off()
 
-pdf("functional_analysis_results/liver_genomic_features_pie.pdf", width=15, height=5)
-par(mfrow=c(1,3))
-plotAnnoPie(liver_conserved_anno, main="Liver Conserved Regions")
-plotAnnoPie(human_liver_specific_anno, main="Human Liver-Specific")
-plotAnnoPie(mouse_liver_specific_anno, main="Mouse Liver-Specific")
-dev.off()
-
 # Pancreas genomic annotations
-pdf("functional_analysis_results/pancreas_genomic_features_bar.pdf", width=10, height=6)
+pdf("cross-species_results/pancreas_genomic_features_bar.pdf", width=10, height=6)
 plotAnnoBar(pancreas_anno_list)
-dev.off()
-
-pdf("functional_analysis_results/pancreas_genomic_features_pie.pdf", width=15, height=5)
-par(mfrow=c(1,3))
-plotAnnoPie(pancreas_conserved_anno, main="Pancreas Conserved Regions")
-plotAnnoPie(human_pancreas_specific_anno, main="Human Pancreas-Specific")
-plotAnnoPie(mouse_pancreas_specific_anno, main="Mouse Pancreas-Specific")
-dev.off()
-
-# Distribution of peaks relative to TSS
-# Liver
-pdf("functional_analysis_results/liver_tss_distance.pdf", width=10, height=6)
-plotDistToTSS(liver_anno_list, title="Liver Regions - Distance to TSS")
-dev.off()
-
-# Pancreas
-pdf("functional_analysis_results/pancreas_tss_distance.pdf", width=10, height=6)
-plotDistToTSS(pancreas_anno_list, title="Pancreas Regions - Distance to TSS")
 dev.off()
 
 # Convert to data frames
@@ -150,7 +116,6 @@ pancreas_conserved_genes <- unique(pancreas_conserved_df$geneId[!is.na(pancreas_
 human_pancreas_specific_genes <- unique(human_pancreas_specific_df$geneId[!is.na(human_pancreas_specific_df$geneId)])
 mouse_pancreas_specific_genes <- unique(mouse_pancreas_specific_df$geneId[!is.na(mouse_pancreas_specific_df$geneId)])
 
-###################### MODIFIED GENE LISTS FOR COMBINED ANALYSIS ######################
 # Create gene lists with consistent structure across all categories
 liver_gene_list <- list(
   "Conserved" = liver_conserved_genes,
@@ -215,10 +180,10 @@ pancreas_go_mouse <- compareCluster(
 )
 
 # Save GO results
-write.csv(as.data.frame(liver_go_human), "functional_analysis_results/liver_GO_human_results.csv")
-write.csv(as.data.frame(liver_go_mouse), "functional_analysis_results/liver_GO_mouse_results.csv")
-write.csv(as.data.frame(pancreas_go_human), "functional_analysis_results/pancreas_GO_human_results.csv")
-write.csv(as.data.frame(pancreas_go_mouse), "functional_analysis_results/pancreas_GO_mouse_results.csv")
+write.csv(as.data.frame(liver_go_human), "cross-species_results/liver_GO_human_results.csv")
+write.csv(as.data.frame(liver_go_mouse), "cross-species_results/liver_GO_mouse_results.csv")
+write.csv(as.data.frame(pancreas_go_human), "cross-species_results/pancreas_GO_human_results.csv")
+write.csv(as.data.frame(pancreas_go_mouse), "cross-species_results/pancreas_GO_mouse_results.csv")
 
 ###################### COMBINED GO VISUALIZATION ######################
 # Extract data from GO results for combined visualization
@@ -263,7 +228,7 @@ if (nrow(liver_go_combined) > 0) {
   liver_go_combined$Description <- substr(liver_go_combined$Description, 1, 50)
   
   # Create combined plot for liver
-  pdf("functional_analysis_results/liver_GO_combined_dotplot.pdf", width=14, height=12)
+  pdf("cross-species_results/liver_GO_combined_dotplot.pdf", width=14, height=12)
   p <- ggplot(liver_go_combined, 
               aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
     geom_point() +
@@ -287,7 +252,7 @@ if (nrow(pancreas_go_combined) > 0) {
   pancreas_go_combined$Description <- substr(pancreas_go_combined$Description, 1, 50)
   
   # Create combined plot for pancreas
-  pdf("functional_analysis_results/pancreas_GO_combined_dotplot.pdf", width=14, height=12)
+  pdf("cross-species_results/pancreas_GO_combined_dotplot.pdf", width=14, height=12)
   p <- ggplot(pancreas_go_combined, 
               aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
     geom_point() +
@@ -341,10 +306,10 @@ pancreas_kegg_mouse <- compareCluster(
 )
 
 # Save KEGG results
-write.csv(as.data.frame(liver_kegg_human), "functional_analysis_results/liver_KEGG_human_results.csv")
-write.csv(as.data.frame(liver_kegg_mouse), "functional_analysis_results/liver_KEGG_mouse_results.csv")
-write.csv(as.data.frame(pancreas_kegg_human), "functional_analysis_results/pancreas_KEGG_human_results.csv")
-write.csv(as.data.frame(pancreas_kegg_mouse), "functional_analysis_results/pancreas_KEGG_mouse_results.csv")
+write.csv(as.data.frame(liver_kegg_human), "cross-species_results/liver_KEGG_human_results.csv")
+write.csv(as.data.frame(liver_kegg_mouse), "cross-species_results/liver_KEGG_mouse_results.csv")
+write.csv(as.data.frame(pancreas_kegg_human), "cross-species_results/pancreas_KEGG_human_results.csv")
+write.csv(as.data.frame(pancreas_kegg_mouse), "cross-species_results/pancreas_KEGG_mouse_results.csv")
 
 ###################### COMBINED KEGG VISUALIZATION ######################
 # Extract data from KEGG results
@@ -389,7 +354,7 @@ if (nrow(liver_kegg_combined) > 0) {
   liver_kegg_combined$Description <- substr(liver_kegg_combined$Description, 1, 50)
   
   # Create combined plot for liver
-  pdf("functional_analysis_results/liver_KEGG_combined_dotplot.pdf", width=14, height=12)
+  pdf("cross-species_results/liver_KEGG_combined_dotplot.pdf", width=14, height=12)
   p <- ggplot(liver_kegg_combined, 
               aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
     geom_point() +
@@ -413,7 +378,7 @@ if (nrow(pancreas_kegg_combined) > 0) {
   pancreas_kegg_combined$Description <- substr(pancreas_kegg_combined$Description, 1, 50)
   
   # Create combined plot for pancreas
-  pdf("functional_analysis_results/pancreas_KEGG_combined_dotplot.pdf", width=14, height=12)
+  pdf("cross-species_results/pancreas_KEGG_combined_dotplot.pdf", width=14, height=12)
   p <- ggplot(pancreas_kegg_combined, 
               aes(x=Count, y=Description, size=Count, color=-log10(p.adjust))) +
     geom_point() +
@@ -430,28 +395,3 @@ if (nrow(pancreas_kegg_combined) > 0) {
   print(p)
   dev.off()
 }
-
-# Create a summary report with statistics and top enriched terms
-sink("functional_analysis_results/functional_analysis_summary.txt")
-cat("# Functional Analysis of Conserved and Specific Regions\n\n")
-
-cat("## Peak Statistics\n")
-cat("Liver conserved regions:", length(liver_conserved), "\n")
-cat("Human liver-specific regions:", length(human_liver_specific), "\n")
-cat("Mouse liver-specific regions:", length(mouse_liver_specific), "\n")
-cat("Pancreas conserved regions:", length(pancreas_conserved), "\n")
-cat("Human pancreas-specific regions:", length(human_pancreas_specific), "\n")
-cat("Mouse pancreas-specific regions:", length(mouse_pancreas_specific), "\n\n")
-
-cat("## Gene Statistics\n")
-cat("Genes associated with liver conserved regions:", length(liver_conserved_genes), "\n")
-cat("Genes associated with human liver-specific regions:", length(human_liver_specific_genes), "\n")
-cat("Genes associated with mouse liver-specific regions:", length(mouse_liver_specific_genes), "\n")
-cat("Genes associated with pancreas conserved regions:", length(pancreas_conserved_genes), "\n")
-cat("Genes associated with human pancreas-specific regions:", length(human_pancreas_specific_genes), "\n")
-cat("Genes associated with mouse pancreas-specific regions:", length(mouse_pancreas_specific_genes), "\n\n")
-
-# Print completion message
-cat("Functional analysis complete! Combined GO and KEGG plots have been created for each tissue.\n")
-cat("Results saved to the 'functional_analysis_results' directory.\n")
-
