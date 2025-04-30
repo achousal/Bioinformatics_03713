@@ -97,7 +97,61 @@ HUMAN_PANCREAS_TO_MOUSE_HALPER="$MAPPED_DIR/human_pancreas.HumanToMouse.HALPER.n
 MOUSE_LIVER_TO_HUMAN_HALPER="$MAPPED_DIR/mouse_liver.MouseToHuman.HALPER.narrowPeak.gz"
 MOUSE_PANCREAS_TO_HUMAN_HALPER="$MAPPED_DIR/mouse_pancreas.MouseToHuman.HALPER.narrowPeak.gz"
 
-# ===== STEP 2: Cross-species and Tissue Comparison =====
+# ===== STEP 2: CHIPseeker R script =====
+
+# Run cross-species/tissue mapping script
+echo "Running cross-species/tissue mapping"
+bash cross_species.sh "$HUMAN_LIVER_PEAKS" "$HUMAN_PANCREAS_PEAKS" "$MOUSE_LIVER_PEAKS" "$MOUSE_PANCREAS_PEAKS" \
+    "$HUMAN_LIVER_TO_MOUSE_HALPER" "$HUMAN_PANCREAS_TO_MOUSE_HALPER" "$MOUSE_LIVER_TO_HUMAN_HALPER" "$MOUSE_PANCREAS_TO_HUMAN_HALPER"
+
+if [ $? -ne 0 ]; then
+  echo "Error in cross_species.sh"
+  exit 1
+fi
+
+# Define BED inputs for downstream analysis
+HUMAN_SHARED="./results/tissue_comparison/human_shared_between_liver_and_pancreas.bed"
+HUMAN_LIVER_SPECIFIC="./results/tissue_comparison/human_liver_specific.bed"
+HUMAN_PANCREAS_SPECIFIC="./results/tissue_comparison/human_pancreas_specific.bed"
+MOUSE_SHARED="./results/tissue_comparison/mouse_shared_between_liver_and_pancreas.bed"
+MOUSE_LIVER_SPECIFIC="./results/tissue_comparison/mouse_liver_specific.bed"
+MOUSE_PANCREAS_SPECIFIC="./results/tissue_comparison/mouse_pancreas_specific.bed"
+
+HUMAN_LIVER_CONSERVED="./results/cross_species/human_liver_conserved_in_mouse_liver.bed"
+HUMAN_LIVER_NOT_CONSERVED="./results/cross_species/human_liver_not_conserved_in_mouse.bed"
+MOUSE_LIVER_NOT_CONSERVED="./results/cross_species/mouse_liver_not_conserved_in_human.bed"
+HUMAN_PANCREAS_CONSERVED="./results/cross_species/human_pancreas_conserved_in_mouse_pancreas.bed"
+HUMAN_PANCREAS_NOT_CONSERVED="./results/cross_species/human_pancreas_not_conserved_in_mouse.bed"
+MOUSE_PANCREAS_NOT_CONSERVED="./results/cross_species/mouse_pancreas_not_conserved_in_human.bed"
+
+mkdir -p cross-tissue_results cross-species_results
+
+# Cross-tissue R analysis
+echo "Running CHIPseeker_Cross_tissue.R"
+Rscript CHIPseeker_Cross_tissue.R "$HUMAN_SHARED" "$HUMAN_LIVER_SPECIFIC" "$HUMAN_PANCREAS_SPECIFIC" \
+                                  "$MOUSE_SHARED" "$MOUSE_LIVER_SPECIFIC" "$MOUSE_PANCREAS_SPECIFIC"
+
+if [ $? -ne 0 ]; then
+  echo "Error in CHIPseeker_Cross_tissue.R"
+  exit 1
+fi
+
+# Cross-species R analysis
+echo "Running CHIPseeker_Cross_species.R"
+Rscript CHIPseeker_Cross_species.R "$HUMAN_LIVER_CONSERVED" "$HUMAN_LIVER_NOT_CONSERVED" "$MOUSE_LIVER_NOT_CONSERVED" \
+                                   "$HUMAN_PANCREAS_CONSERVED" "$HUMAN_PANCREAS_NOT_CONSERVED" "$MOUSE_PANCREAS_NOT_CONSERVED"
+
+if [ $? -ne 0 ]; then
+  echo "Error in CHIPseeker_Cross_species.R"
+  exit 1
+fi
+
+echo "Pipeline completed successfully!"
+echo "Results:"
+echo "  - cross-tissue_results/"
+echo "  - cross-species_results/"
+
+# ===== STEP 3: Cross-species and Tissue Comparison =====
 echo "Running tissue-specific and conservation analyses..."
 
 # ===== CONFIGURATION =====
