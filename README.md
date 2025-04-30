@@ -16,7 +16,7 @@
 - [Installation](#installation)
 - [Input Files](#input-files)
 - [Usage](#usage)
-- [Output Files](#output-files)
+- [Output Files](#outputs)
 - [Pitfalls and Limitations](#pitfalls-and-limitations)
 
 ---
@@ -117,7 +117,7 @@ Finally, ensure the base directory and halper directory are modified accordingly
 
 ---
 
-## Output Directory 
+## Outputs
 
 - `results/`: Main output directory (set as `$OUTPUT_DIR`)
     - `mapped_peaks/`: Contains HALPER-mapped peak files between species
