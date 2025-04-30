@@ -32,15 +32,28 @@ library(clusterProfiler)
 library(enrichplot)
 library(ggplot2)
 
+# Create output directory
+dir.create("cross-tissue_results", showWarnings = FALSE)
+
 # Import the peak data (BED file)
+args <- commandArgs(trailingOnly = TRUE)
+input_file1 <- args[1]
+input_file2 <- args[2]
+input_file3 <- args[3]
+input_file4 <- args[4]
+input_file5 <- args[5]
+input_file6 <- args[6]
+
 # Human .bed file 
-human_conserve_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/human_shared_between_liver_and_pancreas.bed") ##feel free to change the file path here
-human_liver_specific_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/human_liver_specific.bed")
-human_pancreas_specific_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/human_pancreas_specific.bed")
+human_conserve_peaks <- readPeakFile(input_file1)
+human_liver_specific_peaks <- readPeakFile(input_file2)
+human_pancreas_specific_peaks <- readPeakFile(input_file3)
+
 # Mouse .bed file
-mouse_conserve_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/mouse_shared_between_liver_and_pancreas.bed") 
-mouse_liver_specific_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/mouse_liver_specific.bed")
-mouse_pancreas_specific_peaks <- readPeakFile("/Users/yinuoyang/Desktop/cmu/03713/tissue_comparison/mouse_pancreas_specific.bed")
+mouse_conserve_peaks <- readPeakFile(input_file4) 
+mouse_liver_specific_peaks <- readPeakFile(input_file5)
+mouse_pancreas_specific_peaks <- readPeakFile(input_file6)
+
 
 # Get a summary of peak annotations
 txdb_mouse <- TxDb.Mmusculus.UCSC.mm10.knownGene
@@ -87,24 +100,14 @@ all_peaks <- list(
   "Mouse_Pancreas" = peakAnno_mouse_pancreas
 )
 
-# Combined pie charts of genomic feature distribution
-pdf("combined_pie_charts.pdf", width=12, height=8)
-par(mfrow=c(2,3))
-plotAnnoPie(peakAnno_human_conserve, main="Human Conserved")
-plotAnnoPie(peakAnno_human_liver, main="Human Liver-Specific")
-plotAnnoPie(peakAnno_human_pancreas, main="Human Pancreas-Specific")
-plotAnnoPie(peakAnno_mouse_conserve, main="Mouse Conserved")
-plotAnnoPie(peakAnno_mouse_liver, main="Mouse Liver-Specific")
-plotAnnoPie(peakAnno_mouse_pancreas, main="Mouse Pancreas-Specific")
-dev.off()
 
 # Combined bar plot of genomic feature distribution
-pdf("combined_anno_bar.pdf", width=10, height=6)
+pdf("cross-tissue_results/combined_anno_bar.pdf", width=10, height=6)
 plotAnnoBar(all_peaks)
 dev.off()
 
 # Combined distribution of peaks relative to TSS
-pdf("combined_distToTSS.pdf", width=10, height=6)
+pdf("cross-tissue_results/combined_distToTSS.pdf", width=10, height=6)
 plotDistToTSS(all_peaks, title="Distribution of peaks relative to TSS")
 dev.off()
 
@@ -155,15 +158,15 @@ comp_go_mouse <- compareCluster(
 )
 
 # Save results to CSV
-write.csv(as.data.frame(comp_go_human), "human_GO_enrichment_results.csv")
-write.csv(as.data.frame(comp_go_mouse), "mouse_GO_enrichment_results.csv")
+write.csv(as.data.frame(comp_go_human), "cross-tissue_results/human_GO_enrichment_results.csv")
+write.csv(as.data.frame(comp_go_mouse), "cross-tissue_results/mouse_GO_enrichment_results.csv")
 
 # Visualize comparative results
-pdf("human_GO_dotplot.pdf", width=12, height=10)
+pdf("cross-tissue_results/human_GO_dotplot.pdf", width=12, height=15)
 dotplot(comp_go_human, showCategory=15, title="Human Biological Processes Comparison")
 dev.off()
 
-pdf("mouse_GO_dotplot.pdf", width=12, height=10)
+pdf("cross-tissue_results/mouse_GO_dotplot.pdf", width=12, height=15)
 dotplot(comp_go_mouse, showCategory=15, title="Mouse Biological Processes Comparison")
 dev.off()
 
@@ -191,120 +194,14 @@ kegg_mouse <- compareCluster(
 )
 
 # Save KEGG results
-write.csv(as.data.frame(kegg_human), "human_KEGG_pathway_results.csv")
-write.csv(as.data.frame(kegg_mouse), "mouse_KEGG_pathway_results.csv")
+write.csv(as.data.frame(kegg_human), "cross-tissue_results/human_KEGG_pathway_results.csv")
+write.csv(as.data.frame(kegg_mouse), "cross-tissue_results/mouse_KEGG_pathway_results.csv")
 
 # KEGG pathway visualization
-pdf("human_KEGG_dotplot.pdf", width=12, height=8)
+pdf("cross-tissue_results/human_KEGG_dotplot.pdf", width=12, height=15)
 dotplot(kegg_human, showCategory=15, title="Human KEGG Pathway Comparison")
 dev.off()
 
-pdf("mouse_KEGG_dotplot.pdf", width=12, height=8)
+pdf("cross-tissue_results/mouse_KEGG_dotplot.pdf", width=12, height=15)
 dotplot(kegg_mouse, showCategory=15, title="Mouse KEGG Pathway Comparison")
 dev.off()
-
-# Combined cross-species analysis (optional, for advanced comparison)
-# We need to map mouse genes to human orthologs first
-
-# Compare overlapping biological processes
-# Create a venn diagram of enriched terms
-library(VennDiagram)
-library(grid)
-
-# Extract significant GO terms
-human_terms <- unique(as.data.frame(comp_go_human)$Description)
-mouse_terms <- unique(as.data.frame(comp_go_mouse)$Description)
-
-# Create Venn diagram
-pdf("human_mouse_GO_overlap.pdf", width=8, height=8)
-venn.plot <- draw.pairwise.venn(
-  length(human_terms), 
-  length(mouse_terms), 
-  length(intersect(human_terms, mouse_terms)),
-  category = c("Human", "Mouse"),
-  fill = c("blue", "red"),
-  alpha = 0.5,
-  cat.pos = c(0, 0),
-  cat.dist = c(0.025, 0.025)
-)
-grid.draw(venn.plot)
-dev.off()
-
-# Create summary report
-sink("functional_annotation_summary.txt")
-cat("# Functional Annotation Analysis Summary\n\n")
-cat("## Peak Statistics\n")
-cat("Human conserved regions:", length(human_conserve_peaks), "\n")
-cat("Human liver-specific regions:", length(human_liver_specific_peaks), "\n")
-cat("Human pancreas-specific regions:", length(human_pancreas_specific_peaks), "\n")
-cat("Mouse conserved regions:", length(mouse_conserve_peaks), "\n")
-cat("Mouse liver-specific regions:", length(mouse_liver_specific_peaks), "\n")
-cat("Mouse pancreas-specific regions:", length(mouse_pancreas_specific_peaks), "\n\n")
-
-cat("## Gene Statistics\n")
-cat("Human conserved genes:", length(genes_human_conserve), "\n")
-cat("Human liver-specific genes:", length(genes_human_liver), "\n")
-cat("Human pancreas-specific genes:", length(genes_human_pancreas), "\n")
-cat("Mouse conserved genes:", length(genes_mouse_conserve), "\n")
-cat("Mouse liver-specific genes:", length(genes_mouse_liver), "\n")
-cat("Mouse pancreas-specific genes:", length(genes_mouse_pancreas), "\n\n")
-
-cat("## Top enriched biological processes\n")
-cat("### Human conserved:\n")
-print(head(as.data.frame(comp_go_human)[as.data.frame(comp_go_human)$Cluster == "Conserved", c("Description", "pvalue", "qvalue")], 10))
-cat("\n### Human liver-specific:\n")
-print(head(as.data.frame(comp_go_human)[as.data.frame(comp_go_human)$Cluster == "Liver", c("Description", "pvalue", "qvalue")], 10))
-cat("\n### Human pancreas-specific:\n")
-print(head(as.data.frame(comp_go_human)[as.data.frame(comp_go_human)$Cluster == "Pancreas", c("Description", "pvalue", "qvalue")], 10))
-
-cat("\n### Mouse conserved:\n")
-print(head(as.data.frame(comp_go_mouse)[as.data.frame(comp_go_mouse)$Cluster == "Conserved", c("Description", "pvalue", "qvalue")], 10))
-cat("\n### Mouse liver-specific:\n")
-print(head(as.data.frame(comp_go_mouse)[as.data.frame(comp_go_mouse)$Cluster == "Liver", c("Description", "pvalue", "qvalue")], 10))
-cat("\n### Mouse pancreas-specific:\n")
-print(head(as.data.frame(comp_go_mouse)[as.data.frame(comp_go_mouse)$Cluster == "Pancreas", c("Description", "pvalue", "qvalue")], 10))
-sink()
-
-# Create a heatmap of top shared processes between species
-# Extract common terms between human and mouse
-common_terms <- intersect(human_terms, mouse_terms)
-
-if(length(common_terms) > 0) {
-  # Filter the results to get only common terms
-  human_common <- as.data.frame(comp_go_human)[as.data.frame(comp_go_human)$Description %in% common_terms, ]
-  mouse_common <- as.data.frame(comp_go_mouse)[as.data.frame(comp_go_mouse)$Description %in% common_terms, ]
-  
-  # Create a matrix for heatmap
-  common_matrix <- matrix(0, nrow=length(common_terms), ncol=6)
-  rownames(common_matrix) <- common_terms
-  colnames(common_matrix) <- c("Human_Conserved", "Human_Liver", "Human_Pancreas", 
-                               "Mouse_Conserved", "Mouse_Liver", "Mouse_Pancreas")
-  
-  # Fill the matrix with -log10(pvalue)
-  for(i in 1:length(common_terms)) {
-    term <- common_terms[i]
-    # Human
-    human_term <- human_common[human_common$Description == term, ]
-    for(cluster in unique(human_term$Cluster)) {
-      col_idx <- which(colnames(common_matrix) == paste0("Human_", cluster))
-      common_matrix[i, col_idx] <- -log10(human_term$pvalue[human_term$Cluster == cluster])
-    }
-    
-    # Mouse
-    mouse_term <- mouse_common[mouse_common$Description == term, ]
-    for(cluster in unique(mouse_term$Cluster)) {
-      col_idx <- which(colnames(common_matrix) == paste0("Mouse_", cluster))
-      common_matrix[i, col_idx] <- -log10(mouse_term$pvalue[mouse_term$Cluster == cluster])
-    }
-  }
-  
-  # Create heatmap
-  pdf("cross_species_GO_heatmap.pdf", width=12, height=15)
-  heatmap(common_matrix, Rowv=NA, Colv=NA, scale="none", 
-          col=colorRampPalette(c("white", "red"))(100),
-          margins=c(10,30))
-  dev.off()
-}
-
-# Print completion message
-cat("Analysis complete! All results have been saved to files in the current directory.\n")
