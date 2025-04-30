@@ -58,6 +58,7 @@ Sequences from classified regulatory elements are extracted and analyzed using M
 ## Requirements
 
 - [HALPER](https://github.com/pfenninglab/halLiftover-postprocessing)
+    - Follow [these](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) directions exactly
 - [BEDTools](https://bedtools.readthedocs.io/)
 - [MEME Suite](https://meme-suite.org/)
 - [ChIPseeker (R package)](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
@@ -95,45 +96,39 @@ Install dependencies using conda. Closely follow installation instructions for i
 
 ## Usage
 
-Run the entire pipeline with:
+First, makes ure to edit the `CONFIGURATION` section of `run_full_pipeline.sh` based on 
+your file paths. 
 
-```bash
-bash run_full_pipeline.sh
+Ensure you install HALPER exactly based on [this](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) guide. If the guide is not 
+followed exactly, this pipeline will not work. 
+
+For the `HALPER CONFIG` step, make sure to alter the following accordingly in the 
+configuration section of `run_full_pipeline.sh`:
+
 ```
-(be sure to go through the code and set filepath to your own files)
+export PATH=[repos dir]/hal/bin:${PATH}
+export PYTHONPATH=[repos dir]/halLiftover-postprocessing:${PYTHONPATH}
+```
 
-This script will:
+Next, add all of the full paths for the GTF files, peak files, genome files, motif databases, and multi-species alignment. 
 
-- Perform cross-species mapping with HALPER
-- Identify conserved and tissue-specific peaks
-- Classify peaks as promoters/enhancers
-- Extract sequences and run motif discovery
-- Generate summary statistics and output files
+Finally, ensure the base directory and halper directory are modified accordingly. 
 
 **All intermediate and final outputs will be organized in the `results/` directory.**
 
 ---
 
-## Output Files
+## Output Directory 
 
-- `mapped_peaks/` — Cross-species mapped peaks (BED)
-- `conserved_peaks/`, `tissue_specific/`, `shared_peaks/` — Conservation analysis (BED)
-- `classified/` — Promoter/enhancer classification (BED)
-- `sequences/` — FASTA files for motif analysis
-- `meme_results/` — Motif discovery results (MEME-ChIP)
-- `functional_analysis/` — Functional annotation and enrichment results
-- `statistics.txt` — Summary of peak counts and classifications
-
----
-
-## Parameters
-
-Key parameters can be set at the top of `run_full_pipeline.sh`, including:
-
-- Input file locations
-- Output directory
-- Number of CPUs and memory
-- Promoter region definition (default: 2kb upstream, 200bp downstream of TSS)
+- `results/`: Main output directory (set as `$OUTPUT_DIR`)
+    - `mapped_peaks/`: Contains HALPER-mapped peak files between species
+    - `cross_species/`: Results of cross-species conservation analysis
+        - `processed_files/`: BED files processed from HALPER outputs for downstream intersection; CHANGE
+    - `tissue_comparison/`: Results of within-species tissue comparisons
+    - `sequences/`: FASTA files for motif analysis
+    - `meme_results`: Output from MEME-ChIP motif discovery
+- `promoters_enhancers/`: Contains classified promoter/enhancer BEDs for each species and tissue (set as `$CLASSIFIED_DIR`)
+- `logs/`: SLURM and pipeline run logs
 
 ---
 
