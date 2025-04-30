@@ -16,7 +16,7 @@
 - [Installation](#installation)
 - [Input Files](#input-files)
 - [Usage](#usage)
-- [Output Files](#outputs)
+- [Outputs](#outputs)
 - [Pitfalls and Limitations](#pitfalls-and-limitations)
 
 ---
