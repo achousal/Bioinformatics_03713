@@ -17,7 +17,6 @@
 - [Input Files](#input-files)
 - [Usage](#usage)
 - [Output Files](#output-files)
-- [Parameters](#parameters)
 - [Pitfalls and Limitations](#pitfalls-and-limitations)
 
 ---
