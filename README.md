@@ -260,7 +260,7 @@ The main pipeline is orchestrated by `main.sh`, which calls the following script
 
 If you use this pipeline in your research, please cite:
 
-Andres Chousal, Zahin Peerzade, Siddharth Sabata, Yinuo Yang. *RegulatoryElementAnalysisPipeline: A pipeline for Cross-Species Regulatory Element Analysis of Human and Mouse ATAC data*. GitHub repository. Available at: https://github.com/achousal/Bioinformatics_03713 (Accessed 29 Apr 2025).
+Andres Chousal, Zahin Peerzade, Siddharth Sabata, Yinuo Yang. *RegulatoryElementAnalysisPipeline: A pipeline for Cross-Species Regulatory Element Analysis of Human and Mouse ATAC data*. GitHub repository. Available at: https://github.com/BioinformaticsDataPracticum2025/Bioinformatics_03713 (Accessed 29 Apr 2025).
 
 
 ---
