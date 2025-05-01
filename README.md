@@ -8,19 +8,6 @@
 
 ---
 
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Workflow](#workflow)
-- [Requirements](#requirements)
-- [Installation](#installation)
-- [Input Files](#input-files)
-- [Usage](#usage)
-- [Outputs](#outputs)
-- [Pitfalls and Limitations](#pitfalls-and-limitations)
-
----
-
 ## Introduction
 
 This pipeline performs a comparative analysis of transcriptional regulatory elements (promoters and enhancers) between liver and pancreas tissues in human and mouse. It maps open chromatin regions across species, identifies conserved and tissue-specific elements, classifies peaks as promoters or enhancers, and performs motif discovery and functional enrichment.
@@ -53,7 +40,20 @@ Open chromatin regions are classified as promoters (within 2kb upstream and 200b
 Sequences from classified regulatory elements are extracted and analyzed using [MEME-ChIP](https://meme-suite.org/meme/) for de novo motif discovery. This step identifies enriched transcription factor binding motifs in different categories of regulatory elements, revealing how the transcriptional regulatory code differs between tissues and species. By comparing motifs between enhancers and promoters across species and tissues, we can understand how the language of transcription factors has evolved.
 
 ---
-## Setup and Configuration (`main.sh`)
+## Repository Setup
+
+- `pipeline/` contains an automated, end to end script of this pipeline. It has NOT been tested due to technical difficulties with the Pittsburgh Supercomputing Center. 
+    - Scripts in this directory explained later in this document.
+- `scripts/` contains prototypes, and original scripts used to generate data. While doing this project, we used smaller scripts to run each part instead of one end to end pipeline. These individual scripts were adapted into the end to end pipeline. 
+    - `bash_running.sh`: Bash script for running ChIPseeker
+    - `cross_species.sh`: Slurm script for cross-species/tissue analysis with BEDTools
+    - `enhancer.sh`: Slurm script for enhancer/promoter classification and statistics 
+    - `halper_liftover.sh`: Slurm script for HALPER
+    - `map_halper.sh`: Slurm script for HALPER
+    - `run_full_pipeline.sh`: Slurm script prototype of full pipeline. Final pipeline took this implementation, but split into six files. 
+
+---
+## Setup and Configuration (`pipeline/main.sh`)
 
 The main pipeline execution is controlled by `main.sh`. This script handles the overall setup, configuration, and sequential execution of the individual step scripts. Before running the pipeline, ensure the following setup and configuration steps are correctly addressed:
 
@@ -274,4 +274,4 @@ Andres Chousal, Zahin Peerzade, Siddharth Sabata, Yinuo Yang. *RegulatoryElement
 
 ## AI Usage
 - GenAI assistance used to create README
-- GenAI used in all code. Original code was written by humans, but AI was used to optimize, comment, and bugfix. The final scripts in this directory have been modified with AI. 
+- GenAI used in all code. Original code was written by humans, but AI was used to optimize, comment, and bugfix. The final scripts in this repository have been modified with AI. 
