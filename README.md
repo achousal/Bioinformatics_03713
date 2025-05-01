@@ -45,12 +45,14 @@ Sequences from classified regulatory elements are extracted and analyzed using [
 - `pipeline/` contains an automated, end to end script of this pipeline. It has NOT been tested due to technical difficulties with the Pittsburgh Supercomputing Center. 
     - Scripts in this directory explained later in this document.
 - `scripts/` contains prototypes, and original scripts used to generate data. While doing this project, we used smaller scripts to run each part instead of one end to end pipeline. These individual scripts were adapted into the end to end pipeline. 
-    - `bash_running.sh`: Bash script for running ChIPseeker
-    - `cross_species.sh`: Slurm script for cross-species/tissue analysis with BEDTools
-    - `enhancer.sh`: Slurm script for enhancer/promoter classification and statistics 
-    - `halper_liftover.sh`: Slurm script for HALPER
-    - `map_halper.sh`: Slurm script for HALPER
+    - `bash_running.sh`: Bash script for running ChIPseeker.
+    - `cross_species.sh`: Slurm script for cross-species/tissue analysis with BEDTools.
+    - `enhancer.sh`: Slurm script for enhancer/promoter classification and statistics.
+    - `halper_liftover.sh`: Slurm script for HALPER.
+    - `map_halper.sh`: Slurm script for HALPER.
     - `run_full_pipeline.sh`: Slurm script prototype of full pipeline. Final pipeline took this implementation, but split into six files. 
+    - `CHIPseeker/`: ChIPseeker R scripts, along with associated reports. 
+    - `meme_chip/`: MEME-ChIP results. 
 
 ---
 ## Setup and Configuration (`pipeline/main.sh`)
