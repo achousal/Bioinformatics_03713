@@ -40,37 +40,64 @@ We aim to answer three primary questions with these results:
 
 ![](https://github.com/achousal/Bioinformatics_03713/blob/main/pipeline_final.png)
 1. **Data Quality Control**
-ATAC-seq quality reports (provided) from human and mouse liver, pancreas, and ovary were used to determine which datasets to use for further analysis. The ovarian dataset consisted of short read lengths for both human and mouse, and was thrown out. This step is essential for ensuring informative results. 
+ATAC-seq (Assay for Transposase-Accessible Chromatin using Sequencing) quality reports (provided) from human and mouse liver, pancreas, and ovary manually analyzed to determine which datasets to use for further analysis. The ovarian dataset consisted of short read lengths for both human and mouse, and was thrown out. This step is essential for ensuring informative results. 
 2. **Cross-Species Mapping**
-Open chromatin regions identified from ATAC-seq are mapped between human and mouse genomes using HALPER (HAL Liftover Post-processing for Epigenomic Regions) with Cactus whole-genome alignments. This step is crucial for identifying orthologous regulatory elements between species, allowing direct comparison of regulatory activity at corresponding genomic locations. The mapping process accounts for genomic rearrangements and evolutionary changes that have occurred since the divergence of humans and mice. 
+Open chromatin regions identified from ATAC-seq are mapped between human and mouse genomes using [HALPER](https://github.com/pfenninglab/halLiftover-postprocessing) (HAL Liftover Post-processing for Epigenomic Regions) with Cactus whole-genome alignments. This step is crucial for identifying orthologous regulatory elements between species, allowing direct comparison of regulatory activity at corresponding genomic locations. 
 3. **Conservation and Specificity Analysis (Question 1)**
-This step identifies and categorizes regulatory elements based on their conservation patterns: elements conserved between species for the same tissue, elements shared across tissues within a species, and elements specific to a tissue or species. By quantifying these different categories, we can directly address whether regulatory element activity is more conserved across tissues or species. This analysis provides insights into the evolutionary constraints on gene regulation.
+This step identifies regulatory elements based on their conservation patterns: elements conserved between species for the same tissue, elements shared across tissues within a species, and elements specific to a tissue or species. By quantifying these different categories, we can directly address whether regulatory element activity is more conserved across tissues or species. 
 4. **Functional Annotation (Question 3)** 
-Regulatory elements identified in previous steps are annotated and analyzed for GO term enrichment with ChIPseeker. This analysis connects regulatory elements to their potential target genes and biological functions, revealing which biological processes are regulated by conserved versus species-specific elements. The functional analysis helps determine whether similar biological processes are regulated by conserved elements across species, despite potential differences in the specific regulatory elements.
+Regulatory elements identified in previous steps are annotated and analyzed for Gene Ontology (GO) term enrichment with [ChIPseeker](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html). This analysis connects regulatory elements to their potential target genes and biological functions, revealing which biological processes are regulated by conserved versus species-specific elements. The functional analysis helps determine whether similar biological processes are regulated by conserved elements across species, despite potential differences in the specific regulatory elements.
 5. **Enhancer/Promoter Classification (Question 2)** 
-Open chromatin regions are classified as promoters (within 2kb upstream and 200bp downstream of TSS) or enhancers (all other regions) using BEDTools and genome annotations. This classification is essential for understanding how conservation patterns differ between these two types of regulatory elements. Promoters, which are proximal to genes, may be under different evolutionary constraints than enhancers, which can act at a distance and may evolve more rapidly.
+Open chromatin regions are classified as promoters (within 2kb upstream and 200bp downstream of Tanscription Start Site, or TSS) or enhancers (all other regions) using [BEDTools](https://bedtools.readthedocs.io/) and genome annotations. This classification is essential for understanding how conservation patterns differ between these two types of regulatory elements. Promoters, which are proximal to genes, may be under different evolutionary constraints than enhancers, which can act at a distance and may evolve more rapidly.
 6. **Motif Discovery (Question 2)** 
-Sequences from classified regulatory elements are extracted and analyzed using MEME-ChIP for de novo motif discovery. This step identifies enriched transcription factor binding motifs in different categories of regulatory elements, revealing how the transcriptional regulatory code differs between tissues and species. By comparing motifs between enhancers and promoters across species and tissues, we can understand how the language of transcription factors has evolved.
+Sequences from classified regulatory elements are extracted and analyzed using [MEME-ChIP](https://meme-suite.org/meme/) for de novo motif discovery. This step identifies enriched transcription factor binding motifs in different categories of regulatory elements, revealing how the transcriptional regulatory code differs between tissues and species. By comparing motifs between enhancers and promoters across species and tissues, we can understand how the language of transcription factors has evolved.
 
 ---
 ## Setup and Configuration (`main.sh`)
 
 The main pipeline execution is controlled by `main.sh`. This script handles the overall setup, configuration, and sequential execution of the individual step scripts. Before running the pipeline, ensure the following setup and configuration steps are correctly addressed:
 
-**1. Execution Environment & Dependencies:**
+**Execution Environment & Dependencies:**
 
-*   **Scheduler:** The script includes SLURM directives (`#SBATCH`) for job submission on a cluster. Modify these directives (job name, output/error files, time, partition, nodes, CPUs, memory) according to your cluster's requirements.
-*   **Modules:** The pipeline relies on specific software versions loaded via environment modules. The required modules and versions specified in `main.sh` are:
-    *   `bedtools/2.30.0`
-    *   `R/4.1.2` (Check R package dependencies for CHIPseeker scripts: `ChIPseeker`, `TxDb.Hsapiens.UCSC.hg38.knownGene`, `TxDb.Mmusculus.UCSC.mm10.knownGene`, `clusterProfiler`, `org.Hs.eg.db`, `org.Mm.eg.db`, `ggplot2`, `argparse`)
-    *   `MEME-suite/5.4.1`
-    *   `samtools/1.15`
-    *   `anaconda3/2022.10`
-    Ensure these or compatible versions are available and loaded correctly on your system.
-*   **Conda Environment:** A conda environment named `hal` is activated using `source activate hal`. This environment is expected to contain the necessary Python packages and potentially the HAL tools themselves. Make sure this environment exists and includes the required dependencies for HALPER (check HALPER documentation).
-*   **HAL Tools Path:** The script explicitly adds `/jet/home/achousal/repos/hal/bin` to the system `PATH` and `/jet/home/achousal/repos/halLiftover-postprocessing` to `PYTHONPATH`. **Crucially, modify these paths** to point to the correct locations of your HAL command-line tools installation and the HALPER postprocessing scripts, respectively.
+**Requirements**
+- [HALPER](https://github.com/pfenninglab/halLiftover-postprocessing)
+    - Follow [these](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) directions exactly
+- [BEDTools](https://bedtools.readthedocs.io/)
+- [MEME Suite](https://meme-suite.org/)
+- [ChIPseeker (R package)](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
+- [Anaconda3](https://www.anaconda.com/)
+- [R](https://www.r-project.org/)
+- [samtools](https://www.htslib.org/)
+- HPC with SLURM
 
-**2. Configuration Variables (within `main.sh`):**
+Install dependencies using conda. Closely follow installation instructions for installing each required tool. 
+
+
+For the `HALPER CONFIG` step, make sure to alter the following accordingly in the 
+configuration section of `main.sh`:
+
+```
+export PATH=[repos dir]/hal/bin:${PATH}
+export PYTHONPATH=[repos dir]/halLiftover-postprocessing:${PYTHONPATH}
+```
+
+**Required Input Files** 
+- **ATAC-seq peak files:**
+    - 4 total: human liver, human pancreas, mouse liver, mouse pancreas
+    - `idr.optimal_peak.narrowPeak.gz`
+    - Pipeline automatically decrompresses 
+- **Cactus (multi-species) alignment:**
+    - `alignment.hal`
+- **Genome annotations:**
+    - 2 total: human, mouse
+    - `annotation.gff3.gz`
+    - Pipeline automatically decrompresses 
+- **Reference genomes:**
+    - 2 total: human, mouse
+    - `ref_genome.fa`
+- **Motif database:**
+    - 2 total: human, mouse
+    - `motif_db.meme`
 
 All paths to input files and key directories must be correctly set within the `CONFIGURATION` section of `main.sh`:
 
@@ -82,11 +109,11 @@ All paths to input files and key directories must be correctly set within the `C
 *   `MOTIF_DB_HUMAN`, `MOTIF_DB_MOUSE`: Full paths to the motif databases in MEME format for human and mouse, used by MEME-ChIP in Step 5.
 *   `CACTUS_ALIGNMENT`: Full path to the multi-species whole-genome alignment file in HAL format, used by HALPER in Step 1.
 
-**3. Script Locations:**
+**Script Locations:**
 
 *   `SCRIPT_DIR`: This variable is automatically set to the directory where `main.sh` is located. The script assumes that all the step scripts (`halper.sh`, `compare.sh`, `chipseeker.sh`, `pro_enh.sh`, `memechip.sh`) and the R scripts (`CHIPseeker_Cross_tissue.R`, `CHIPseeker_Cross_species.R`) reside in this same directory. If they are located elsewhere, you will need to adjust the paths in the `bash` and `Rscript` calls within `main.sh` and `chipseeker.sh`.
 
-**4. Output Directory:**
+**Output Directory:**
 
 *   `OUTPUT_DIR`: An output directory named `results_pipeline_YYYY-MM-DD_HH-MM` (timestamped) will be created under `BASE_DIR`. All results, logs, and intermediate files from the pipeline steps will be organized within this directory.
 *   `LOG_DIR`: A `logs` subdirectory within `OUTPUT_DIR` will store the main stdout (`main_pipeline_run.log`) and stderr (`main_pipeline_run.err`) for the entire pipeline run. Individual step scripts might create their own logs if configured to do so (currently they don't).
@@ -98,7 +125,7 @@ All paths to input files and key directories must be correctly set within the `C
 **6. Running the Pipeline:**
 
 *   Submit the `main.sh` script to your scheduler (e.g., `sbatch main.sh`) or run it directly in an interactive session after ensuring all dependencies and configurations are correct.
-*   The script executes each step sequentially. If any step fails (`if [ $? -ne 0 ]`), the pipeline will exit with an error message.
+*   The script executes each step sequentially. If any step fails, the pipeline will exit with an error message.
 
 The main pipeline is orchestrated by `main.sh`, which calls the following scripts in sequence.
 
@@ -229,127 +256,6 @@ The main pipeline is orchestrated by `main.sh`, which calls the following script
     *   `<output_dir>/meme_chip_results/<subset_name>/meme-chip.log`: Log file for each MEME-ChIP run.
 
 --- 
----
-
-## Requirements
-
-- [HALPER](https://github.com/pfenninglab/halLiftover-postprocessing)
-    - Follow [these](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) directions exactly
-- [BEDTools](https://bedtools.readthedocs.io/)
-- [MEME Suite](https://meme-suite.org/)
-- [ChIPseeker (R package)](https://bioconductor.org/packages/release/bioc/html/ChIPseeker.html)
-- [Anaconda3](https://www.anaconda.com/)
-- HPC with SLURM
-
----
-
-## Installation
-
-Install dependencies using conda. Closely follow installation instructions for installing each required tool. 
-
----
-
-## Input Files
-
-- **ATAC-seq peak files:**
-    - 4 total: human liver, human pancreas, mouse liver, mouse pancreas
-    - `idr.optimal_peak.narrowPeak.gz`
-    - Pipeline automatically decrompresses 
-- **Cactus (multi-species) alignment:**
-    - `alignment.hal`
-- **Genome annotations:**
-    - 2 total: human, mouse
-    - `annotation.gff3.gz`
-    - Pipeline automatically decrompresses 
-- **Reference genomes:**
-    - 2 total: human, mouse
-    - `ref_genome.fa`
-- **Motif database:**
-    - 2 total: human, mouse
-    - `motif_db.meme`
-
----
-
-## Usage
-
-First, make sure to edit the `CONFIGURATION` section of `run_full_pipeline.sh` based on 
-your file paths: 
-
-```
-# ===== CONFIGURATION: MODIFY THIS ACCORDING TO YOUR PATHS =====
-# REFER TO README
-# HALPER CONFIG
-export PATH=/jet/home/achousal/repos/hal/bin:${PATH}
-export PYTHONPATH=/jet/home/achousal/repos/halLiftover-postprocessing:${PYTHONPATH}
-
-# GTF files
-HUMAN_GTF="$BASE_DIR/ikaplow/HumanGenomeInfo/gencode.v47.annotation.gff3.gz"
-MOUSE_GTF="$BASE_DIR/ikaplow/MouseGenomeInfo/gencode.vM10.annotation.gff3.gz"
-
-# Raw peak files
-HUMAN_LIVER_PEAKS="$BASE_DIR/ikaplow/HumanAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
-HUMAN_PANCREAS_PEAKS="$BASE_DIR/ikaplow/HumanAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
-MOUSE_LIVER_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Liver/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
-MOUSE_PANCREAS_PEAKS="$BASE_DIR/ikaplow/MouseAtac/Pancreas/peak/idr_reproducibility/idr.optimal_peak.narrowPeak.gz"
-
-# Genome FASTA files
-HUMAN_GENOME="$BASE_DIR/ikaplow/HumanGenomeInfo/hg38.fa"
-MOUSE_GENOME="$BASE_DIR/ikaplow/MouseGenomeInfo/mm10.fa"
-
-# Motif databases
-MOTIF_DB_HUMAN="$BASE_DIR/ikaplow/CIS-BP_2.00/Homo_sapiens.meme"
-MOTIF_DB_MOUSE="$BASE_DIR/ikaplow/CIS-BP_2.00/Mus_musculus.meme"
-
-# Multi-species alignment
-CACTUS_ALIGNMENT="/ocean/projects/bio230007p/achousal/ikaplow/Alignments/10plusway-master.hal"
-
-BASE_DIR="/ocean/projects/bio230007p/achousal"
-HALPER_DIR="/jet/home/achousal/repos/halLiftover-postprocessing"
-
-# ===== CONFIGURATION END =====
-```
-
-Ensure you install HALPER exactly based on [this](https://github.com/pfenninglab/halLiftover-postprocessing/blob/master/hal_install_instructions.md) guide. If the guide is not 
-followed exactly, this pipeline will not work. 
-
-For the `HALPER CONFIG` step, make sure to alter the following accordingly in the 
-configuration section of `run_full_pipeline.sh`:
-
-```
-export PATH=[repos dir]/hal/bin:${PATH}
-export PYTHONPATH=[repos dir]/halLiftover-postprocessing:${PYTHONPATH}
-```
-
-Next, add all of the full paths for the GTF files, peak files, genome files, motif databases, and multi-species alignment. 
-
-Finally, ensure the base directory and halper directory are modified accordingly. 
-
-**All intermediate and final outputs will be organized in the `results/` directory.**
-
----
-
-## Outputs
-
-- `results/`: Main output directory (set as `$OUTPUT_DIR`)
-    - `mapped_peaks/`: Contains HALPER-mapped peak files between species
-    - `cross_species/`: Results of cross-species conservation analysis
-        - `processed_files/`: BED files processed from HALPER outputs for downstream intersection; CHANGE
-    - `tissue_comparison/`: Results of within-species tissue comparisons
-    - `sequences/`: FASTA files for motif analysis
-    - `meme_results`: Output from MEME-ChIP motif discovery
-- `promoters_enhancers/`: Contains classified promoter/enhancer BEDs for each species and tissue (set as `$CLASSIFIED_DIR`)
-- `logs/`: SLURM and pipeline run logs
-
----
-
-## Pitfalls and Limitations
-
-- **Memory limits:** Ensure your SLURM job requests do not exceed 2GB/core on RM-shared.
-- **File paths:** Update all input/output paths as needed for your environment.
-- **Genome builds:** All files must use the same genome build (e.g., hg38 for human).
-- **HALPER and MEME Suite:** Ensure correct Python and software versions for compatibility.
-
----
 ## Cite Us
 
 If you use this pipeline in your research, please cite:
@@ -368,4 +274,6 @@ Andres Chousal, Zahin Peerzade, Siddharth Sabata, Yinuo Yang. *RegulatoryElement
 
 ---
 
-*GenAI assistance used to create README*
+## AI Usage
+- GenAI assistance used to create README
+- GenAI used in all code. Original code was written by humans, but AI was used to optimize, comment, and bugfix. The final scripts in this directory have been modified with AI. 
