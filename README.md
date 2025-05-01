@@ -53,6 +53,183 @@ Open chromatin regions are classified as promoters (within 2kb upstream and 200b
 Sequences from classified regulatory elements are extracted and analyzed using MEME-ChIP for de novo motif discovery. This step identifies enriched transcription factor binding motifs in different categories of regulatory elements, revealing how the transcriptional regulatory code differs between tissues and species. By comparing motifs between enhancers and promoters across species and tissues, we can understand how the language of transcription factors has evolved.
 
 ---
+## Setup and Configuration (`main.sh`)
+
+The main pipeline execution is controlled by `main.sh`. This script handles the overall setup, configuration, and sequential execution of the individual step scripts. Before running the pipeline, ensure the following setup and configuration steps are correctly addressed:
+
+**1. Execution Environment & Dependencies:**
+
+*   **Scheduler:** The script includes SLURM directives (`#SBATCH`) for job submission on a cluster. Modify these directives (job name, output/error files, time, partition, nodes, CPUs, memory) according to your cluster's requirements.
+*   **Modules:** The pipeline relies on specific software versions loaded via environment modules. The required modules and versions specified in `main.sh` are:
+    *   `bedtools/2.30.0`
+    *   `R/4.1.2` (Check R package dependencies for CHIPseeker scripts: `ChIPseeker`, `TxDb.Hsapiens.UCSC.hg38.knownGene`, `TxDb.Mmusculus.UCSC.mm10.knownGene`, `clusterProfiler`, `org.Hs.eg.db`, `org.Mm.eg.db`, `ggplot2`, `argparse`)
+    *   `MEME-suite/5.4.1`
+    *   `samtools/1.15`
+    *   `anaconda3/2022.10`
+    Ensure these or compatible versions are available and loaded correctly on your system.
+*   **Conda Environment:** A conda environment named `hal` is activated using `source activate hal`. This environment is expected to contain the necessary Python packages and potentially the HAL tools themselves. Make sure this environment exists and includes the required dependencies for HALPER (check HALPER documentation).
+*   **HAL Tools Path:** The script explicitly adds `/jet/home/achousal/repos/hal/bin` to the system `PATH` and `/jet/home/achousal/repos/halLiftover-postprocessing` to `PYTHONPATH`. **Crucially, modify these paths** to point to the correct locations of your HAL command-line tools installation and the HALPER postprocessing scripts, respectively.
+
+**2. Configuration Variables (within `main.sh`):**
+
+All paths to input files and key directories must be correctly set within the `CONFIGURATION` section of `main.sh`:
+
+*   `BASE_DIR`: The top-level base directory. Input files are typically expected relative to this directory, and the main output directory will be created here.
+*   `HALPER_DIR`: Path to the directory containing HALPER helper scripts, specifically `halper_map_peak_orthologs.sh` used in Step 1.
+*   `HUMAN_GTF`, `MOUSE_GTF`: Full paths to the gzipped gene annotation files (GFF3 format) for human (hg38) and mouse (mm10).
+*   `*_PEAKS_GZ` (e.g., `HUMAN_LIVER_PEAKS_GZ`): Full paths to the original gzipped narrowPeak files containing ATAC-seq peaks for each species and tissue.
+*   `*_GENOME_FA` (e.g., `HUMAN_GENOME_FA`): Full paths to the reference genome FASTA files for human and mouse.
+*   `MOTIF_DB_HUMAN`, `MOTIF_DB_MOUSE`: Full paths to the motif databases in MEME format for human and mouse, used by MEME-ChIP in Step 5.
+*   `CACTUS_ALIGNMENT`: Full path to the multi-species whole-genome alignment file in HAL format, used by HALPER in Step 1.
+
+**3. Script Locations:**
+
+*   `SCRIPT_DIR`: This variable is automatically set to the directory where `main.sh` is located. The script assumes that all the step scripts (`halper.sh`, `compare.sh`, `chipseeker.sh`, `pro_enh.sh`, `memechip.sh`) and the R scripts (`CHIPseeker_Cross_tissue.R`, `CHIPseeker_Cross_species.R`) reside in this same directory. If they are located elsewhere, you will need to adjust the paths in the `bash` and `Rscript` calls within `main.sh` and `chipseeker.sh`.
+
+**4. Output Directory:**
+
+*   `OUTPUT_DIR`: An output directory named `results_pipeline_YYYY-MM-DD_HH-MM` (timestamped) will be created under `BASE_DIR`. All results, logs, and intermediate files from the pipeline steps will be organized within this directory.
+*   `LOG_DIR`: A `logs` subdirectory within `OUTPUT_DIR` will store the main stdout (`main_pipeline_run.log`) and stderr (`main_pipeline_run.err`) for the entire pipeline run. Individual step scripts might create their own logs if configured to do so (currently they don't).
+
+**5. Genome Indexing:**
+
+*   The `main.sh` script checks for the existence of FASTA index files (`.fai`) for the human and mouse genomes. If an index file is missing, it automatically generates it using `samtools faidx`. Ensure you have write permissions in the directory containing the genome FASTA files if indexing is required.
+
+**6. Running the Pipeline:**
+
+*   Submit the `main.sh` script to your scheduler (e.g., `sbatch main.sh`) or run it directly in an interactive session after ensuring all dependencies and configurations are correct.
+*   The script executes each step sequentially. If any step fails (`if [ $? -ne 0 ]`), the pipeline will exit with an error message.
+
+The main pipeline is orchestrated by `main.sh`, which calls the following scripts in sequence.
+
+---
+
+## Step 1: `halper.sh` - HALPER Liftover
+
+*   **Purpose**: Maps peaks between species (Human <-> Mouse) using the HALPER tool. Generates mapped coordinates in BED3 format while retaining the original detailed HALPER output in narrowPeak format.
+*   **Usage**:
+    ```bash
+    ./halper.sh <output_dir> <halper_dir> <cactus_alignment> <human_liver_peaks_gz> <human_pancreas_peaks_gz> <mouse_liver_peaks_gz> <mouse_pancreas_peaks_gz>
+    ```
+*   **Inputs**:
+    *   `Arg 1: <output_dir>`: Base directory for all pipeline results.
+    *   `Arg 2: <halper_dir>`: Directory containing HALPER helper scripts (e.g., `halper_map_peak_orthologs.sh`).
+    *   `Arg 3: <cactus_alignment>`: Path to the HAL alignment file (e.g., `*.hal`).
+    *   `Arg 4: <human_liver_peaks_gz>`: Gzipped narrowPeak - Original Human Liver peaks.
+    *   `Arg 5: <human_pancreas_peaks_gz>`: Gzipped narrowPeak - Original Human Pancreas peaks.
+    *   `Arg 6: <mouse_liver_peaks_gz>`: Gzipped narrowPeak - Original Mouse Liver peaks.
+    *   `Arg 7: <mouse_pancreas_peaks_gz>`: Gzipped narrowPeak - Original Mouse Pancreas peaks.
+*   **Outputs** (within `<output_dir>/mapped_peaks/`):
+    *   `human_liver_Mouse_mapped.bed`: BED3 - Human Liver peaks mapped to Mouse coordinates.
+    *   `human_pancreas_Mouse_mapped.bed`: BED3 - Human Pancreas peaks mapped to Mouse coordinates.
+    *   `mouse_liver_Human_mapped.bed`: BED3 - Mouse Liver peaks mapped to Human coordinates.
+    *   `mouse_pancreas_Human_mapped.bed`: BED3 - Mouse Pancreas peaks mapped to Human coordinates.
+    *   `human_liver.HumanToMouse.HALPER.narrowPeak.gz`: Gzipped narrowPeak - Raw HALPER output (Human Liver -> Mouse).
+    *   `human_pancreas.HumanToMouse.HALPER.narrowPeak.gz`: Gzipped narrowPeak - Raw HALPER output (Human Pancreas -> Mouse).
+    *   `mouse_liver.MouseToHuman.HALPER.narrowPeak.gz`: Gzipped narrowPeak - Raw HALPER output (Mouse Liver -> Human).
+    *   `mouse_pancreas.MouseToHuman.HALPER.narrowPeak.gz`: Gzipped narrowPeak - Raw HALPER output (Mouse Pancreas -> Human).
+
+---
+
+## Step 2: `compare.sh` - Initial Bedtools Comparisons
+
+*   **Purpose**: Performs initial tissue-level (shared/specific) and cross-species conservation comparisons using `bedtools`. It processes the raw HALPER narrowPeak output from Step 1 and compares regions against the original peak sets.
+*   **Usage**:
+    ```bash
+    ./compare.sh <output_dir> <human_liver_peaks_gz> <human_pancreas_peaks_gz> <mouse_liver_peaks_gz> <mouse_pancreas_peaks_gz> <human_liver_to_mouse_halper_np> <human_pancreas_to_mouse_halper_np> <mouse_liver_to_human_halper_np> <mouse_pancreas_to_human_halper_np>
+    ```
+*   **Inputs**:
+    *   `Arg 1: <output_dir>`: Base directory for pipeline results.
+    *   `Arg 2: <human_liver_peaks_gz>`: Gzipped narrowPeak - Original Human Liver peaks.
+    *   `Arg 3: <human_pancreas_peaks_gz>`: Gzipped narrowPeak - Original Human Pancreas peaks.
+    *   `Arg 4: <mouse_liver_peaks_gz>`: Gzipped narrowPeak - Original Mouse Liver peaks.
+    *   `Arg 5: <mouse_pancreas_peaks_gz>`: Gzipped narrowPeak - Original Mouse Pancreas peaks.
+    *   `Arg 6: <human_liver_to_mouse_halper_np>`: Gzipped narrowPeak - HALPER output (Human Liver -> Mouse) from Step 1.
+    *   `Arg 7: <human_pancreas_to_mouse_halper_np>`: Gzipped narrowPeak - HALPER output (Human Pancreas -> Mouse) from Step 1.
+    *   `Arg 8: <mouse_liver_to_human_halper_np>`: Gzipped narrowPeak - HALPER output (Mouse Liver -> Human) from Step 1.
+    *   `Arg 9: <mouse_pancreas_to_human_halper_np>`: Gzipped narrowPeak - HALPER output (Mouse Pancreas -> Human) from Step 1.
+*   **Outputs** (within `<output_dir>/initial_comparisons/`):
+    *   **Tissue Comparison** (`tissue_comparison/`):
+        *   BED files: `human_shared_between_liver_and_pancreas.bed`, `human_liver_specific.bed`, `human_pancreas_specific.bed`, `mouse_shared_between_liver_and_pancreas.bed`, `mouse_liver_specific.bed`, `mouse_pancreas_specific.bed`.
+        *   Summary: `step2_tissue_comparison_summary.txt`.
+    *   **Cross-Species Comparison** (`cross_species/`):
+        *   Processed HALPER BEDs (`processed_files/`): `human_liver_to_mouse.bed`, etc.
+        *   Conserved BEDs: `human_liver_conserved_in_mouse_liver.bed`, `human_liver_conserved_in_mouse_pancreas.bed`, etc. (8 files total).
+        *   Non-Conserved BEDs: `human_liver_not_conserved_in_mouse.bed`, `human_pancreas_not_conserved_in_mouse.bed`, etc. (4 files total).
+        *   Summary: `step2_cross_species_conservation_summary.txt`.
+
+---
+
+## Step 3: `chipseeker.sh` - CHIPseeker Annotation
+
+*   **Purpose**: Runs CHIPseeker R scripts to perform genomic feature annotation on the peak subsets generated in Step 2.
+*   **Usage**:
+    ```bash
+    ./chipseeker.sh <output_dir> <human_shared> <human_liver_specific> <human_pancreas_specific> <mouse_shared> <mouse_liver_specific> <mouse_pancreas_specific> <human_liver_conserved> <human_liver_not_conserved> <mouse_liver_not_conserved> <human_pancreas_conserved> <human_pancreas_not_conserved> <mouse_pancreas_not_conserved>
+    ```
+*   **Inputs**:
+    *   `Arg 1: <output_dir>`: Base directory for pipeline results.
+    *   `Arg 2-7`: BED files for tissue shared/specific peaks (Human/Mouse) from Step 2.
+    *   `Arg 8-13`: BED files for cross-species conserved/not-conserved peaks (Human/Mouse) from Step 2.
+    *   Dependencies: `CHIPseeker_Cross_tissue.R`, `CHIPseeker_Cross_species.R` (R scripts assumed to be accessible).
+*   **Outputs** (within `<output_dir>/chipseeker_results/`):
+    *   `cross_tissue_results/`: Directory containing annotation plots and tables from `CHIPseeker_Cross_tissue.R`.
+    *   `cross_species_results/`: Directory containing annotation plots and tables from `CHIPseeker_Cross_species.R`.
+
+---
+
+## Step 4: `pro_enh.sh` - Promoter/Enhancer Classification & Comparison
+
+*   **Purpose**: Defines promoter regions, classifies original peaks into promoter or enhancer subsets, performs detailed tissue and species comparisons on these classified subsets, and calculates summary statistics.
+*   **Usage**:
+    ```bash
+    ./pro_enh.sh <output_dir> <human_gtf> <mouse_gtf> <human_liver_peaks_gz> <human_pancreas_peaks_gz> <mouse_liver_peaks_gz> <mouse_pancreas_peaks_gz> <mapped_hl_to_mm_bed> <mapped_hp_to_mm_bed> <mapped_ml_to_hg_bed> <mapped_mp_to_hg_bed>
+    ```
+*   **Inputs**:
+    *   `Arg 1: <output_dir>`: Base directory for pipeline results.
+    *   `Arg 2: <human_gtf>`: Gzipped GFF3 - Human gene annotation.
+    *   `Arg 3: <mouse_gtf>`: Gzipped GFF3 - Mouse gene annotation.
+    *   `Arg 4-7`: Gzipped narrowPeak files - Original peak sets (Human/Mouse, Liver/Pancreas).
+    *   `Arg 8-11`: BED files - Mapped peak coordinates (from Step 1, e.g., `human_liver_Mouse_mapped.bed`).
+*   **Outputs** (within `<output_dir>/classification_and_comparisons/`):
+    *   **Classification** (`classified_peaks/`):
+        *   Promoter Definitions: `human_promoters_definition.bed`, `mouse_promoters_definition.bed`.
+        *   Classified Peaks (Human): `human/human_liver_promoters.bed`, `human/human_liver_enhancers.bed`, etc. (4 files).
+        *   Classified Peaks (Mouse): `mouse/mouse_liver_promoters.bed`, `mouse/mouse_liver_enhancers.bed`, etc. (4 files).
+    *   **Tissue Comparison** (`region_comparisons/tissue_comparison/`):
+        *   Shared/Specific Enhancers: `human_enhancers_tissue_shared.bed`, `human_liver_enhancers_tissue_specific.bed`, etc. (6 files).
+        *   Shared/Specific Promoters: `human_promoters_tissue_shared.bed`, `human_liver_promoters_tissue_specific.bed`, etc. (6 files).
+    *   **Species Comparison** (`region_comparisons/species_comparison/`):
+        *   Shared/Specific Enhancers vs Mapped: `human_liver_enhancers_shared_with_mapped_mouse_peaks_human_coords.bed`, `human_liver_enhancers_specific_vs_mapped_mouse_peaks_human_coords.bed`, etc. (8 files).
+        *   Shared/Specific Promoters vs Mapped: `human_liver_promoters_shared_with_mapped_mouse_peaks_human_coords.bed`, `human_liver_promoters_specific_vs_mapped_mouse_peaks_human_coords.bed`, etc. (8 files).
+    *   **Summary Statistics**: `classification_and_comparison_summary.txt`.
+
+---
+
+## Step 5: `memechip.sh` - MEME-ChIP Motif Analysis
+
+*   **Purpose**: Performs motif discovery using MEME-ChIP on various peak subsets generated in Step 4 (including full peak sets, classified promoters/enhancers, and tissue/species specific/shared enhancers).
+*   **Usage**:
+    ```bash
+    ./memechip.sh <output_dir> <human_liver_peaks_gz> <human_pancreas_peaks_gz> <mouse_liver_peaks_gz> <mouse_pancreas_peaks_gz> <human_genome_fa> <mouse_genome_fa> <motif_db_human> <motif_db_mouse> <mapped_hl_to_mm_bed> <mapped_hp_to_mm_bed> <mapped_ml_to_hg_bed> <mapped_mp_to_hg_bed>
+    ```
+*   **Inputs**:
+    *   `Arg 1: <output_dir>`: Base directory for pipeline results.
+    *   `Arg 2-5`: Gzipped narrowPeak - Original peak sets (used for 'full' subset analysis).
+    *   `Arg 6: <human_genome_fa>`: FASTA - Human reference genome.
+    *   `Arg 7: <mouse_genome_fa>`: FASTA - Mouse reference genome.
+    *   `Arg 8: <motif_db_human>`: MEME format - Human motif database.
+    *   `Arg 9: <motif_db_mouse>`: MEME format - Mouse motif database.
+    *   `Arg 10-13`: BED - Mapped peaks from Step 1 (used only to check if species comparison was skipped in Step 4).
+    *   *Implicit Dependencies*: Requires classified/comparison BED files generated by `pro_enh.sh` (Step 4) to be present in `<output_dir>/classification_and_comparisons/`.
+*   **Outputs**:
+    *   `<output_dir>/classification_and_comparisons/full_peak_beds/*.bed`: BED3 versions of original peaks (created by this script).
+    *   `<output_dir>/sequences/<subset_name>.fa`: FASTA sequences for each analyzed subset.
+    *   `<output_dir>/meme_chip_results/<subset_name>/`: MEME-ChIP output directory for each subset, containing standard results like `meme-chip.html`, `meme_out/`, etc.
+    *   `<output_dir>/meme_chip_results/<subset_name>/meme-chip.log`: Log file for each MEME-ChIP run.
+
+--- 
+---
 
 ## Requirements
 
