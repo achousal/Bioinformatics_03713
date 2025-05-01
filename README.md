@@ -72,15 +72,6 @@ The main pipeline execution is controlled by `main.sh`. This script handles the 
 
 Install dependencies using conda. Closely follow installation instructions for installing each required tool. 
 
-
-For the `HALPER CONFIG` step, make sure to alter the following accordingly in the 
-configuration section of `main.sh`:
-
-```
-export PATH=[repos dir]/hal/bin:${PATH}
-export PYTHONPATH=[repos dir]/halLiftover-postprocessing:${PYTHONPATH}
-```
-
 **Required Input Files** 
 - **ATAC-seq peak files:**
     - 4 total: human liver, human pancreas, mouse liver, mouse pancreas
@@ -103,6 +94,13 @@ All paths to input files and key directories must be correctly set within the `C
 
 *   `BASE_DIR`: The top-level base directory. Input files are typically expected relative to this directory, and the main output directory will be created here.
 *   `HALPER_DIR`: Path to the directory containing HALPER helper scripts, specifically `halper_map_peak_orthologs.sh` used in Step 1.
+    * For the `HALPER CONFIG` step, make sure to alter the following accordingly in the configuration section of `main.sh`:
+
+    ```
+    export PATH=[repos dir]/hal/bin:${PATH}
+    export PYTHONPATH=[repos dir]/halLiftover-postprocessing:${PYTHONPATH}
+    ```
+
 *   `HUMAN_GTF`, `MOUSE_GTF`: Full paths to the gzipped gene annotation files (GFF3 format) for human (hg38) and mouse (mm10).
 *   `*_PEAKS_GZ` (e.g., `HUMAN_LIVER_PEAKS_GZ`): Full paths to the original gzipped narrowPeak files containing ATAC-seq peaks for each species and tissue.
 *   `*_GENOME_FA` (e.g., `HUMAN_GENOME_FA`): Full paths to the reference genome FASTA files for human and mouse.
